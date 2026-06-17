@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0d0c">
+    <meta name="description" content="Console d'administration Nexora IPTV SaaS.">
+    <title>Nexora Control | Administration</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/assets/admin.css?v=20260617-4">
+</head>
+<body>
+<div class="admin-grain" aria-hidden="true"></div>
+
+<section class="admin-gate" id="adminGate">
+    <div class="gate-orbit" aria-hidden="true"><i></i><i></i><i></i></div>
+    <form class="gate-card" id="adminLoginForm">
+        <a class="admin-brand gate-brand" href="/">
+            <span class="admin-brand-mark">N</span>
+            <span><strong>NEXORA</strong><small>CONTROL ROOM</small></span>
+        </a>
+        <p class="admin-kicker">ACCÈS OPÉRATEUR</p>
+        <h1>Pilotez le réseau.<br><em>Gardez le signal.</em></h1>
+        <p class="gate-copy">Infrastructure IPTV, clients, revenus et support depuis un seul poste de contrôle.</p>
+        <label class="admin-field"><span>Adresse e-mail</span><input name="email" type="email" autocomplete="email" value="admin@example.com" required></label>
+        <label class="admin-field"><span>Mot de passe</span><input name="password" type="password" autocomplete="current-password" value="password" required></label>
+        <label class="admin-field two-factor-field" id="twoFactorField" hidden>
+            <span>Code 2FA</span>
+            <input name="twoFactorCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000">
+            <small>Code de connexion envoyé par e-mail.</small>
+        </label>
+        <p class="form-error" id="loginError" hidden></p>
+        <button class="admin-button admin-button-primary gate-submit" type="submit">Entrer dans la console <span>→</span></button>
+        <a class="gate-back" href="/watch.html">← Retour au catalogue</a>
+    </form>
+</section>
+
+<div class="admin-shell" id="adminShell" hidden>
+    <aside class="admin-sidebar" id="adminSidebar">
+        <a class="admin-brand" href="/">
+            <span class="admin-brand-mark">N</span>
+            <span><strong>NEXORA</strong><small>CONTROL ROOM</small></span>
+        </a>
+        <div class="signal-card">
+            <span class="signal-pulse"></span>
+            <div><strong id="networkStatus">Réseau actif</strong><small id="networkMeta">Synchronisation...</small></div>
+        </div>
+        <nav class="admin-nav" aria-label="Navigation administration">
+            <button class="active" type="button" data-view="dashboard"><svg viewBox="0 0 24 24"><path d="M4 13h6V4H4v9Zm0 7h6v-4H4v4Zm10 0h6v-9h-6v9Zm0-16v4h6V4h-6Z"/></svg>Vue générale</button>
+            <button type="button" data-view="iptv"><svg viewBox="0 0 24 24"><path d="M4 6h16v11H4zM8 21h8M12 17v4M8 2l4 4 4-4"/></svg>Infrastructure IPTV<span class="nav-count" id="accountNavCount">0</span></button>
+            <button type="button" data-view="customers"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clients & accès</button>
+            <button type="button" data-view="billing"><svg viewBox="0 0 24 24"><path d="M3 5h18v14H3zM3 9h18M7 15h4"/></svg>Facturation<span class="nav-count warning" id="paymentNavCount">0</span></button>
+            <button type="button" data-view="support"><svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>Support<span class="nav-count danger" id="ticketNavCount">0</span></button>
+            <button type="button" data-view="ops"><svg viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="3"/></svg>Opérations</button>
+            <button type="button" data-view="integrations"><svg viewBox="0 0 24 24"><path d="M8 12h8M12 8v8M5 5l3 3M19 5l-3 3M5 19l3-3M19 19l-3-3"/><circle cx="12" cy="12" r="9"/></svg>Connecteurs</button>
+            <button type="button" data-view="legal"><svg viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6zM9 10h6M9 14h6M9 18h4M14 3v4h4"/></svg>Documents légaux</button>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="operator-card"><span class="operator-avatar" id="operatorAvatar">A</span><div><strong id="operatorName">Administrateur</strong><small id="operatorRole">SUPER ADMIN</small></div></div>
+            <button class="icon-action" id="adminLogout" type="button" aria-label="Se déconnecter"><svg viewBox="0 0 24 24"><path d="M10 17l5-5-5-5M15 12H3M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/></svg></button>
+        </div>
+    </aside>
+
+    <main class="admin-main">
+        <header class="admin-topbar">
+            <button class="mobile-menu" id="mobileMenu" type="button" aria-label="Ouvrir le menu"><span></span><span></span></button>
+            <div><p class="admin-kicker" id="viewKicker">SITUATION EN TEMPS RÉEL</p><h1 id="viewTitle">Vue générale</h1></div>
+            <div class="topbar-tools">
+                <label class="admin-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="globalSearch" type="search" placeholder="Rechercher dans cette vue"></label>
+                <button class="refresh-button" id="refreshView" type="button"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.34 5.66M20 4v7h-7"/></svg>Actualiser</button>
+                <time class="admin-clock" id="adminClock"></time>
+            </div>
+        </header>
+
+        <section class="admin-view active" data-admin-view="dashboard">
+            <div class="metric-grid" id="dashboardMetrics"></div>
+            <div class="dashboard-grid">
+                <article class="admin-panel performance-panel">
+                    <div class="panel-title-row"><div><p class="admin-kicker">CAPACITÉ DU RÉSEAU</p><h2>Charge des flux</h2></div><span class="live-chip"><i></i> TEMPS RÉEL</span></div>
+                    <div class="capacity-visual">
+                        <div class="capacity-ring" id="capacityRing"><span><strong id="capacityRate">0%</strong><small>utilisé</small></span></div>
+                        <dl class="capacity-facts"><div><dt>Flux actifs</dt><dd id="activeStreamsValue">0</dd></div><div><dt>Capacité totale</dt><dd id="capacityValue">0</dd></div><div><dt>Comptes sains</dt><dd id="healthyAccountsValue">0</dd></div></dl>
+                    </div>
+                </article>
+                <article class="admin-panel">
+                    <div class="panel-title-row"><div><p class="admin-kicker">ACTIVITÉ</p><h2>Paiements récents</h2></div><button class="text-action" type="button" data-jump="billing">Tout voir →</button></div>
+                    <div class="compact-list" id="recentPayments"></div>
+                </article>
+                <article class="admin-panel wide-panel">
+                    <div class="panel-title-row"><div><p class="admin-kicker">ASSISTANCE</p><h2>Tickets à surveiller</h2></div><button class="text-action" type="button" data-jump="support">Ouvrir le support →</button></div>
+                    <div class="table-wrap"><table><thead><tr><th>Sujet</th><th>Priorité</th><th>Statut</th><th>Dernière activité</th></tr></thead><tbody id="recentTickets"></tbody></table></div>
+                </article>
+            </div>
+        </section>
+
+        <section class="admin-view" data-admin-view="iptv">
+            <div class="view-actions">
+                <div class="segmented-control" data-filter-group="accounts"><button class="active" type="button" data-filter-value="all">Tous</button><button type="button" data-filter-value="healthy">Opérationnels</button><button type="button" data-filter-value="warning">À surveiller</button></div>
+                <button class="admin-button admin-button-primary" type="button" data-open-modal="account">+ Ajouter un compte</button>
+            </div>
+            <div class="account-listbar">
+                <span id="accountResultMeta">0 compte</span>
+                <div class="account-list-controls">
+                    <label class="account-page-size"><span>Par page</span><select id="accountPageSize"><option value="12">12</option><option value="24" selected>24</option><option value="48">48</option><option value="96">96</option></select></label>
+                    <div class="account-pagination" id="accountPagination" aria-label="Pagination des comptes"></div>
+                </div>
+            </div>
+            <div class="account-grid" id="accountGrid"></div>
+            <article class="admin-panel section-panel">
+                <div class="panel-title-row"><div><p class="admin-kicker">CONNEXIONS</p><h2>Sessions de lecture</h2></div><span id="sessionCountLabel"></span></div>
+                <div class="table-wrap"><table><thead><tr><th>ID</th><th>Utilisateur</th><th>Contenu</th><th>Source</th><th>Statut</th><th>Dernier signal</th><th></th></tr></thead><tbody id="sessionsTable"></tbody></table></div>
+            </article>
+        </section>
+
+        <section class="admin-view" data-admin-view="customers">
+            <div class="subnav-tabs"><button class="active" type="button" data-customer-tab="organizations">Organisations</button><button type="button" data-customer-tab="users">Utilisateurs</button><button type="button" data-customer-tab="subscriptions">Abonnements</button></div>
+            <article class="admin-panel table-panel"><div class="table-wrap"><table><thead id="customersHead"></thead><tbody id="customersTable"></tbody></table></div></article>
+        </section>
+
+        <section class="admin-view" data-admin-view="billing">
+            <div class="billing-summary-grid" id="billingMetrics"></div>
+            <div class="subnav-tabs"><button class="active" type="button" data-billing-tab="payments">Paiements</button><button type="button" data-billing-tab="plans">Formules</button><button type="button" data-billing-tab="invoices">Factures</button><button type="button" data-billing-tab="methods">Moyens de paiement</button></div>
+            <div class="billing-plan-studio" id="billingPlanStudio" hidden></div>
+            <article class="admin-panel table-panel">
+                <div class="panel-title-row billing-table-heading"><div><p class="admin-kicker" id="billingTableKicker">TRANSACTIONS</p><h2 id="billingTableTitle">Paiements à traiter</h2></div><button class="admin-button admin-button-primary" id="billingAddButton" type="button" hidden></button></div>
+                <div class="table-wrap"><table><thead id="billingHead"></thead><tbody id="billingTable"></tbody></table></div>
+            </article>
+        </section>
+
+        <section class="admin-view support-view" data-admin-view="support">
+            <div class="ticket-column">
+                <div class="ticket-toolbar"><strong>Boîte de réception</strong><select id="ticketStatusFilter"><option value="all">Tous les statuts</option><option value="OPEN">Ouverts</option><option value="PENDING">En attente</option><option value="ANSWERED">Répondus</option><option value="CLOSED">Fermés</option></select></div>
+                <div class="ticket-list" id="ticketList"></div>
+            </div>
+            <article class="admin-panel conversation-panel" id="conversationPanel"><div class="empty-conversation"><span>↗</span><h2>Sélectionnez un ticket</h2><p>La conversation et les outils de traitement apparaîtront ici.</p></div></article>
+        </section>
+
+        <section class="admin-view" data-admin-view="ops">
+            <div class="metric-grid ops-metrics" id="opsMetrics"></div>
+            <div class="dashboard-grid">
+                <article class="admin-panel"><div class="panel-title-row"><div><p class="admin-kicker">DISPONIBILITÉ</p><h2>Points de contrôle</h2></div><button class="admin-button admin-button-small" type="button" data-open-modal="uptime">+ Ajouter</button></div><div class="uptime-list" id="uptimeList"></div></article>
+                <article class="admin-panel"><div class="panel-title-row"><div><p class="admin-kicker">TRACES SYSTÈME</p><h2>Journal d’audit</h2></div></div><div class="audit-list" id="auditList"></div></article>
+            </div>
+        </section>
+
+        <section class="admin-view" data-admin-view="integrations">
+            <div class="connector-intro">
+                <div><p class="admin-kicker">MESSAGERIE TRANSACTIONNELLE</p><h2>Canaux sortants</h2><p>Les secrets sont lus uniquement depuis les variables d'environnement du serveur. Ils ne sont jamais renvoyés au navigateur.</p></div>
+                <span class="secure-chip">SECRETS MASQUÉS</span>
+            </div>
+            <div class="connector-grid">
+                <article class="connector-card">
+                    <div class="connector-head">
+                        <span class="connector-logo smtp-logo">@</span>
+                        <div><p class="admin-kicker">E-MAIL</p><h2>Serveur SMTP</h2></div>
+                        <span class="badge" id="smtpStatusBadge">Vérification</span>
+                    </div>
+                    <dl class="connector-facts" id="smtpFacts"></dl>
+                    <form class="connector-test" id="smtpTestForm">
+                        <label class="admin-field"><span>Adresse de test</span><input id="smtpTestEmail" name="email" type="email" placeholder="admin@exemple.com" required></label>
+                        <button class="admin-button admin-button-primary" type="submit">Envoyer un e-mail test</button>
+                    </form>
+                    <button class="admin-button connector-test-button" id="templateTestButton" type="button">Envoyer l’aperçu des modèles</button>
+                    <div class="env-hint"><strong>Variables nécessaires</strong><code>MAIL_HOST · MAIL_PORT · MAIL_USERNAME · MAIL_PASSWORD<br>MAIL_FROM_ADDRESS · MAIL_SMTP_AUTH · MAIL_STARTTLS</code></div>
+                </article>
+                <article class="connector-card">
+                    <div class="connector-head">
+                        <span class="connector-logo telegram-logo">↗</span>
+                        <div><p class="admin-kicker">ALERTES</p><h2>Bot Telegram</h2></div>
+                        <span class="badge" id="telegramStatusBadge">Vérification</span>
+                    </div>
+                    <dl class="connector-facts" id="telegramFacts"></dl>
+                    <div class="telegram-events">
+                        <strong>Alertes actives</strong>
+                        <span>Paiements en attente et décisions</span>
+                        <span>Tickets support prioritaires</span>
+                        <span>Bascule automatique d'une source IPTV</span>
+                    </div>
+                    <button class="admin-button admin-button-primary connector-test-button" id="telegramTestButton" type="button">Tester les alertes</button>
+                    <button class="admin-button connector-test-button" id="telegramAdminTestButton" type="button">Tester le bot admin</button>
+                    <div class="env-hint"><strong>Variables nécessaires</strong><code>TELEGRAM_ALERTS_ENABLED=true<br>TELEGRAM_BOT_TOKEN · TELEGRAM_CHAT_ID<br>TELEGRAM_ADMIN_ENABLED=true · TELEGRAM_ADMIN_BOT_TOKEN · TELEGRAM_ADMIN_ALLOWED_CHAT_IDS</code></div>
+                </article>
+                <article class="connector-card">
+                    <div class="connector-head">
+                        <span class="connector-logo">TB</span>
+                        <div><p class="admin-kicker">RÉSOLUTION TORRENT</p><h2>TorBox</h2></div>
+                        <span class="badge" id="torboxStatusBadge">Vérification</span>
+                    </div>
+                    <dl class="connector-facts" id="torboxFacts"></dl>
+                    <div class="telegram-events">
+                        <strong>Traitement côté serveur</strong>
+                        <span>Conversion infoHash vers magnet</span>
+                        <span>Sélection du plus grand fichier vidéo</span>
+                        <span>URL HTTPS temporaire relayée par Nexora</span>
+                    </div>
+                    <div class="env-hint"><strong>Variable nécessaire</strong><code>TORBOX_API_TOKEN</code></div>
+                </article>
+            </div>
+            <div class="addon-registry">
+                <div class="addon-registry-head">
+                    <div>
+                        <p class="admin-kicker">REGISTRE COMMUNAUTAIRE</p>
+                        <h2>Add-ons sous contrôle</h2>
+                        <p>Les manifestes sont inspectés côté serveur. Une installation reste invisible du catalogue jusqu’à son approbation explicite.</p>
+                    </div>
+                    <button class="admin-button admin-button-primary" id="addonInstallButton" type="button" data-open-modal="addon">+ Installer un manifeste</button>
+                </div>
+                <div class="addon-trust-strip">
+                    <span>01 · HTTPS public</span>
+                    <span>02 · Licence déclarée</span>
+                    <span>03 · Domaines autorisés</span>
+                    <span>04 · Approbation manuelle</span>
+                </div>
+                <div class="addon-grid" id="addonGrid"></div>
+            </div>
+        </section>
+        <section class="admin-view" data-admin-view="legal">
+            <div class="connector-intro legal-intro">
+                <div><p class="admin-kicker">GOUVERNANCE</p><h2>Documents légaux</h2><p>Gérez les conditions d'utilisation, la confidentialité et les textes publiés auprès des clients.</p></div>
+                <button class="admin-button admin-button-primary" type="button" data-open-modal="legal">+ Nouveau document</button>
+            </div>
+            <div class="legal-grid" id="legalGrid"></div>
+        </section>
+    </main>
+</div>
+
+<div class="admin-modal" id="adminModal" hidden>
+    <div class="admin-modal-backdrop" data-close-admin-modal></div>
+    <section class="admin-modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <button class="admin-modal-close" type="button" data-close-admin-modal>×</button>
+        <p class="admin-kicker" id="modalKicker">CONFIGURATION</p><h2 id="modalTitle">Nouvel élément</h2><form id="dynamicForm"></form>
+    </section>
+</div>
+<div class="admin-toast" id="adminToast" role="status" aria-live="polite" hidden></div>
+<script src="/assets/admin.js?v=20260617-4" defer></script>
+</body>
+</html>

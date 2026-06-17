@@ -1,0 +1,117 @@
+server:
+  port: 8080
+
+logging:
+  level:
+    root: INFO
+    org.hibernate.SQL: WARN
+    org.springframework: INFO
+
+spring:
+  config:
+    import: optional:file:.env[.properties]
+  application:
+    name: iptv-saas-api
+  datasource:
+    url: jdbc:h2:file:./data/iptv-saas;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+  mvc:
+    async:
+      request-timeout: 0
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:false}
+          starttls:
+            enable: ${MAIL_STARTTLS:true}
+            required: ${MAIL_STARTTLS_REQUIRED:false}
+          ssl:
+            enable: ${MAIL_SSL:false}
+
+management:
+  health:
+    mail:
+      enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+app:
+  mail:
+    from-address: ${MAIL_FROM_ADDRESS:${MAIL_USERNAME:noreply@nexora.local}}
+    from-name: ${MAIL_FROM_NAME:Nexora}
+  security:
+    token-ttl-hours: ${TOKEN_TTL_HOURS:168}
+    require-email-verification: ${REQUIRE_EMAIL_VERIFICATION:true}
+    email-otp-ttl-minutes: ${EMAIL_OTP_TTL:15}
+    two-factor-code-ttl-minutes: ${TWO_FACTOR_CODE_TTL:10}
+  billing:
+    default-trial-plan: ${DEFAULT_TRIAL_PLAN:free}
+    default-trial-days: ${DEFAULT_TRIAL_DAYS:7}
+    payment-request-expires-hours: ${PAYMENT_REQUEST_EXPIRES_HOURS:24}
+  iptv:
+    cache-ttl-seconds: ${IPTV_CACHE_TTL:900}
+    m3u-cache-directory: ${IPTV_M3U_CACHE_DIRECTORY:./data/m3u-cache}
+    m3u-cache-max-age-hours: ${IPTV_M3U_CACHE_MAX_AGE_HOURS:168}
+    m3u-max-playlist-bytes: ${IPTV_M3U_MAX_PLAYLIST_BYTES:134217728}
+    m3u-read-timeout-seconds: ${IPTV_M3U_READ_TIMEOUT_SECONDS:180}
+    xtream-cache-directory: ${IPTV_XTREAM_CACHE_DIRECTORY:./data/xtream-cache}
+    xtream-cache-max-age-hours: ${IPTV_XTREAM_CACHE_MAX_AGE_HOURS:168}
+    xtream-timeout-seconds: ${IPTV_XTREAM_TIMEOUT_SECONDS:45}
+    xtream-max-response-bytes: ${IPTV_XTREAM_MAX_RESPONSE_BYTES:134217728}
+    image-proxy-max-bytes: ${IPTV_IMAGE_PROXY_MAX_BYTES:8388608}
+    image-proxy-cache-items: ${IPTV_IMAGE_PROXY_CACHE_ITEMS:256}
+    heartbeat-timeout-seconds: ${IPTV_HEARTBEAT_TIMEOUT_SECONDS:90}
+    session-cleanup-interval-ms: ${IPTV_SESSION_CLEANUP_INTERVAL_MS:30000}
+    proxy-range-chunk-bytes: ${IPTV_PROXY_RANGE_CHUNK_BYTES:2097152}
+    vlc-path: ${IPTV_VLC_PATH:}
+    vlc-startup-timeout-seconds: ${IPTV_VLC_STARTUP_TIMEOUT_SECONDS:45}
+  addons:
+    max-response-bytes: ${ADDON_MAX_RESPONSE_BYTES:2097152}
+    cache-ttl-seconds: ${ADDON_CACHE_TTL_SECONDS:300}
+    allow-private-hosts: ${ADDON_ALLOW_PRIVATE_HOSTS:false}
+    torbox:
+      api-token: ${TORBOX_API_TOKEN:}
+      base-url: ${TORBOX_API_BASE_URL:https://api.torbox.app}
+      allowed-download-hosts: ${TORBOX_ALLOWED_DOWNLOAD_HOSTS:.torbox.app,.tb-cdn.io}
+      max-wait-seconds: ${TORBOX_MAX_WAIT_SECONDS:90}
+      poll-interval-millis: ${TORBOX_POLL_INTERVAL_MILLIS:2000}
+  telegram:
+    alerts:
+      enabled: ${TELEGRAM_ALERTS_ENABLED:false}
+      bot-token: ${TELEGRAM_ALERTS_BOT_TOKEN:${TELEGRAM_BOT_TOKEN:}}
+      chat-id: ${TELEGRAM_ALERTS_CHAT_ID:${TELEGRAM_CHAT_ID:}}
+      iptv-alerts-enabled: ${TELEGRAM_IPTV_ALERTS_ENABLED:true}
+      iptv-alert-interval-ms: ${TELEGRAM_IPTV_ALERT_INTERVAL_MS:300000}
+      iptv-alert-initial-delay-ms: ${TELEGRAM_IPTV_ALERT_INITIAL_DELAY_MS:30000}
+      iptv-expiry-alert-days: ${TELEGRAM_IPTV_EXPIRY_ALERT_DAYS:7}
+      iptv-saturation-threshold-percent: ${TELEGRAM_IPTV_SATURATION_THRESHOLD_PERCENT:90}
+    admin:
+      enabled: ${TELEGRAM_ADMIN_ENABLED:${TELEGRAM_PANEL_ENABLED:false}}
+      bot-token: ${TELEGRAM_ADMIN_BOT_TOKEN:}
+      chat-id: ${TELEGRAM_ADMIN_CHAT_ID:}
+      allowed-chat-ids: ${TELEGRAM_ADMIN_ALLOWED_CHAT_IDS:${TELEGRAM_ADMIN_CHAT_ID:}}
+      readonly-chat-ids: ${TELEGRAM_ADMIN_READONLY_CHAT_IDS:}
+      chat-roles: ${TELEGRAM_ADMIN_CHAT_ROLES:}
+      poll-interval-ms: ${TELEGRAM_ADMIN_POLL_INTERVAL_MS:3000}
+      poll-initial-delay-ms: ${TELEGRAM_ADMIN_POLL_INITIAL_DELAY_MS:5000}

@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#08090b">
+    <meta name="description" content="Votre espace de streaming personnel Nexora.">
+    <title>Nexora Watch | TV, films et séries</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/assets/app.css?v=20260617-1">
+</head>
+<body>
+<div class="noise" aria-hidden="true"></div>
+
+<header class="topbar" id="topbar">
+    <a class="brand" href="#accueil" aria-label="Nexora, accueil">
+        <span class="brand-mark">N</span>
+        <span class="brand-name">NEXORA</span>
+    </a>
+
+    <nav class="main-nav" aria-label="Navigation principale">
+        <button class="nav-link active" type="button" data-filter="all">Accueil</button>
+        <button class="nav-link" type="button" data-filter="live">Direct</button>
+        <button class="nav-link" type="button" data-filter="movie">Films</button>
+        <button class="nav-link" type="button" data-filter="series">Séries</button>
+    </nav>
+
+    <div class="topbar-actions">
+        <div class="search-shell" id="searchShell">
+            <div class="search-box">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7"></circle>
+                    <path d="m20 20-4-4"></path>
+                </svg>
+                <input
+                    id="searchInput"
+                    type="search"
+                    placeholder="Titres, chaînes..."
+                    autocomplete="off"
+                    aria-label="Rechercher dans le catalogue"
+                    aria-controls="searchSuggestions"
+                    aria-expanded="false"
+                    aria-autocomplete="list"
+                >
+                <button class="search-clear" id="searchClear" type="button" aria-label="Effacer la recherche" hidden>×</button>
+            </div>
+            <div class="search-panel" id="searchSuggestions" role="listbox" aria-label="Suggestions de recherche" hidden></div>
+        </div>
+        <button class="icon-button notification-button" type="button" aria-label="Notifications">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+                <path d="M10 21h4"></path>
+            </svg>
+            <span class="notification-dot"></span>
+        </button>
+        <button class="account-button" id="accountButton" type="button">
+            <span class="avatar" id="accountAvatar">N</span>
+            <span id="accountLabel">Connexion</span>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m3 6 5 5 5-5"></path></svg>
+        </button>
+    </div>
+</header>
+
+<main>
+    <section class="hero" id="accueil" aria-labelledby="heroTitle">
+        <div class="hero-backdrop" aria-hidden="true"></div>
+        <div class="hero-vignette" aria-hidden="true"></div>
+        <div class="hero-content">
+            <p class="eyebrow"><span></span> La sélection Nexora</p>
+            <h1 id="heroTitle">Votre télévision.<br><em>Sans frontières.</em></h1>
+            <p class="hero-copy">
+                Retrouvez le direct, vos films et vos séries dans une expérience fluide,
+                pensée pour tous vos écrans.
+            </p>
+            <div class="hero-meta" aria-label="Informations">
+                <span class="match">98 % pour vous</span>
+                <span>4K UHD</span>
+                <span>Multi-écrans</span>
+                <span class="age">12+</span>
+            </div>
+            <div class="hero-actions">
+                <button class="button button-primary" id="heroPlay" type="button">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z"></path></svg>
+                    Regarder
+                </button>
+                <button class="button button-glass" id="discoverButton" type="button">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <path d="M12 11v6M12 7h.01"></path>
+                    </svg>
+                    Découvrir
+                </button>
+            </div>
+        </div>
+
+        <div class="hero-index" aria-hidden="true">
+            <span>01</span>
+            <div><i></i></div>
+            <span>04</span>
+        </div>
+    </section>
+
+    <section class="catalog-shell" id="catalogue" aria-labelledby="catalogTitle">
+        <div class="catalog-heading">
+            <div>
+                <p class="section-kicker" id="catalogKicker">À VOIR MAINTENANT</p>
+                <h2 id="catalogTitle">Le meilleur du catalogue</h2>
+            </div>
+            <div class="status-pill" id="catalogStatus">
+                <span></span>
+                Mode découverte
+            </div>
+        </div>
+
+        <div class="catalog-controls">
+            <div class="genre-list" id="genreList" aria-label="Filtrer par catégorie">
+                <button class="genre-chip active" type="button" data-category="">Tout</button>
+            </div>
+            <div class="catalog-selectors">
+                <label class="catalog-select addon-filter" id="addonFilterControl" hidden>
+                    <span id="addonFilterLabel">Filtre ASA</span>
+                    <select id="addonFilterSelect" aria-label="Filtrer le catalogue ASA"></select>
+                </label>
+                <label class="catalog-select language-filter" id="languageFilter">
+                    <span>Langue</span>
+                    <select id="languageSelect" aria-label="Filtrer le catalogue par langue">
+                        <option value="">Toutes les langues</option>
+                    </select>
+                </label>
+                <label class="catalog-select movie-sort" id="movieSortControl" hidden>
+                    <span>Trier les films</span>
+                    <select id="movieSort">
+                        <option value="title-asc">Titre A-Z</option>
+                        <option value="title-desc">Titre Z-A</option>
+                        <option value="recent">Les plus récents</option>
+                        <option value="category">Par genre</option>
+                    </select>
+                </label>
+            </div>
+        </div>
+
+        <div id="catalogRows" class="catalog-rows" aria-live="polite"></div>
+
+        <div class="empty-state" id="emptyState" hidden>
+            <span>0 résultat</span>
+            <h3>Aucun programme à l’horizon</h3>
+            <p>Essayez une autre recherche ou revenez à l’ensemble du catalogue.</p>
+            <button class="button button-outline" id="resetFilters" type="button">Réinitialiser</button>
+        </div>
+    </section>
+</main>
+
+<footer class="footer">
+    <div class="brand footer-brand">
+        <span class="brand-mark">N</span>
+        <span class="brand-name">NEXORA</span>
+    </div>
+    <p>La télévision qui suit votre rythme.</p>
+    <nav aria-label="Liens secondaires">
+        <a href="/">Présentation</a>
+        <a href="/api/docs">API</a>
+        <a href="/swagger-ui.html">Documentation</a>
+        <a href="mailto:support@nexora.local">Assistance</a>
+        <button type="button" id="footerAccountButton">Mon compte</button>
+    </nav>
+    <small>© 2026 Nexora. Interface client IPTV.</small>
+</footer>
+
+<div class="modal" id="authModal" hidden>
+    <div class="modal-backdrop" data-close-modal="authModal"></div>
+    <section class="modal-card auth-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+        <button class="modal-close" type="button" data-close-modal="authModal" aria-label="Fermer">×</button>
+        <div class="modal-brand">
+            <span class="brand-mark">N</span>
+            <span class="section-kicker">ESPACE CLIENT</span>
+        </div>
+        <h2 id="authTitle">Bon retour parmi nous.</h2>
+        <p id="authSubtitle">Connectez-vous pour accéder au direct et à votre catalogue.</p>
+
+        <div class="auth-tabs" id="authTabs">
+            <button class="active" type="button" data-auth-mode="login">Connexion</button>
+            <button type="button" data-auth-mode="register">Créer un compte</button>
+        </div>
+
+        <form id="authForm">
+            <label class="field register-field" hidden>
+                <span>Nom complet</span>
+                <input name="name" type="text" autocomplete="name" placeholder="Votre nom">
+            </label>
+            <label class="field register-field" hidden>
+                <span>Organisation</span>
+                <input name="organizationName" type="text" autocomplete="organization" placeholder="Nom de votre espace">
+            </label>
+            <label class="field">
+                <span>Adresse e-mail</span>
+                <input name="email" type="email" autocomplete="email" placeholder="vous@exemple.com" required>
+            </label>
+            <label class="field">
+                <span>Mot de passe</span>
+                <input name="password" type="password" autocomplete="current-password" minlength="6" placeholder="6 caractères minimum" required>
+            </label>
+            <label class="field" id="twoFactorField" hidden>
+                <span>Code de vérification</span>
+                <input name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000">
+            </label>
+            <p class="form-error" id="authError" role="alert" hidden></p>
+            <button class="button button-primary submit-button" id="authSubmit" type="submit">
+                Se connecter
+                <span class="spinner" aria-hidden="true"></span>
+            </button>
+        </form>
+        <p class="demo-hint">Compte de démonstration : <strong>test@example.com</strong> / <strong>password</strong></p>
+    </section>
+</div>
+
+<div class="modal" id="profileModal" hidden>
+    <div class="modal-backdrop" data-close-modal="profileModal"></div>
+    <section class="modal-card profile-card account-settings-card" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
+        <button class="modal-close" type="button" data-close-modal="profileModal" aria-label="Fermer">×</button>
+        <p class="section-kicker">MON ESPACE</p>
+        <h2 id="profileTitle">Votre compte Nexora</h2>
+        <div class="profile-identity">
+            <span class="avatar avatar-large" id="profileAvatar">N</span>
+            <div>
+                <strong id="profileName">Utilisateur</strong>
+                <span id="profileEmail">—</span>
+            </div>
+        </div>
+        <dl class="profile-details">
+            <div><dt>Organisation</dt><dd id="profileOrganization">—</dd></div>
+            <div><dt>Formule</dt><dd id="profilePlan">—</dd></div>
+            <div><dt>Statut</dt><dd id="profileStatus">—</dd></div>
+        </dl>
+        <div class="settings-layout">
+            <nav class="settings-nav" aria-label="Paramètres du compte">
+                <button class="active" type="button" data-settings-tab="profile">Profil</button>
+                <button type="button" data-settings-tab="playback">Lecture</button>
+                <button type="button" data-settings-tab="security">Sécurité</button>
+                <button type="button" data-settings-tab="billing">Abonnement</button>
+            </nav>
+
+            <div class="settings-panels">
+                <form class="settings-panel active" id="profileSettingsForm" data-settings-panel="profile">
+                    <div class="panel-heading">
+                        <p class="section-kicker">PROFIL</p>
+                        <h3>Identité et apparence</h3>
+                    </div>
+                    <div class="settings-grid two-columns">
+                        <label class="field">
+                            <span>Nom affiché</span>
+                            <input id="settingsName" name="name" type="text" autocomplete="name" required>
+                        </label>
+                        <label class="field">
+                            <span>Adresse e-mail</span>
+                            <input id="settingsEmail" name="email" type="email" autocomplete="email" required>
+                        </label>
+                    </div>
+                    <div class="avatar-studio" aria-label="Personnalisation de l'avatar">
+                        <label>
+                            <input type="radio" name="avatarTone" value="gold" checked>
+                            <span style="--tone:#e7c36d"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="avatarTone" value="red">
+                            <span style="--tone:#e85d5d"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="avatarTone" value="green">
+                            <span style="--tone:#4fbf88"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="avatarTone" value="blue">
+                            <span style="--tone:#4f8fbf"></span>
+                        </label>
+                    </div>
+                    <label class="field">
+                        <span>Langue de l'interface</span>
+                        <select id="settingsLanguage" name="language">
+                            <option value="fr">Français</option>
+                            <option value="en">English</option>
+                            <option value="es">Español</option>
+                            <option value="ar">العربية</option>
+                        </select>
+                    </label>
+                    <div class="settings-actions">
+                        <button class="button button-primary" type="submit">Enregistrer</button>
+                    </div>
+                </form>
+
+                <form class="settings-panel" id="playbackSettingsForm" data-settings-panel="playback">
+                    <div class="panel-heading">
+                        <p class="section-kicker">LECTURE</p>
+                        <h3>Préférences vidéo</h3>
+                    </div>
+                    <div class="settings-grid two-columns">
+                        <label class="field">
+                            <span>Qualité par défaut</span>
+                            <select id="settingsQuality" name="quality">
+                                <option value="auto">Auto · source directe</option>
+                                <option value="data">Économie · 480p</option>
+                                <option value="hd">HD · 720p</option>
+                                <option value="fullhd">Full HD · 1080p</option>
+                                <option value="uhd">Originale · jusqu'à 4K</option>
+                            </select>
+                        </label>
+                        <label class="field">
+                            <span>Sous-titres</span>
+                            <select id="settingsSubtitles" name="subtitles">
+                                <option value="off">Désactivés</option>
+                                <option value="fr">Français</option>
+                                <option value="en">English</option>
+                                <option value="auto">Auto</option>
+                            </select>
+                        </label>
+                    </div>
+                    <label class="toggle-row">
+                        <input id="settingsAutoplay" name="autoplay" type="checkbox">
+                        <span></span>
+                        <strong>Lecture automatique</strong>
+                    </label>
+                    <label class="toggle-row">
+                        <input id="settingsCompactCards" name="compactCards" type="checkbox">
+                        <span></span>
+                        <strong>Catalogue compact</strong>
+                    </label>
+                    <div class="settings-actions">
+                        <button class="button button-primary" type="submit">Appliquer</button>
+                    </div>
+                </form>
+
+                <div class="settings-panel" data-settings-panel="security">
+                    <div class="panel-heading">
+                        <p class="section-kicker">SÉCURITÉ</p>
+                        <h3>Accès et sessions</h3>
+                    </div>
+                    <label class="toggle-row">
+                        <input id="settingsTwoFactor" type="checkbox">
+                        <span></span>
+                        <strong>Validation en deux étapes</strong>
+                    </label>
+                    <form class="settings-grid password-grid" id="passwordSettingsForm">
+                        <label class="field">
+                            <span>Mot de passe actuel</span>
+                            <input name="currentPassword" type="password" autocomplete="current-password" minlength="6" required>
+                        </label>
+                        <label class="field">
+                            <span>Nouveau mot de passe</span>
+                            <input name="newPassword" type="password" autocomplete="new-password" minlength="6" required>
+                        </label>
+                        <button class="button button-outline" type="submit">Modifier le mot de passe</button>
+                    </form>
+                    <div class="settings-actions split-actions">
+                        <button class="button button-outline" id="logoutAllButton" type="button">Déconnecter tous les appareils</button>
+                    </div>
+                </div>
+
+                <div class="settings-panel" data-settings-panel="billing">
+                    <div class="panel-heading">
+                        <p class="section-kicker">ABONNEMENT</p>
+                        <h3>Compte et facturation</h3>
+                    </div>
+                    <dl class="billing-summary">
+                        <div><dt>Formule active</dt><dd id="settingsPlan">—</dd></div>
+                        <div><dt>Statut</dt><dd id="settingsStatus">—</dd></div>
+                        <div><dt>Fin de période</dt><dd id="settingsPeriodEnd">—</dd></div>
+                        <div><dt>Streams inclus</dt><dd id="settingsStreams">—</dd></div>
+                    </dl>
+                    <div class="settings-actions split-actions">
+                        <a class="button button-outline" href="/api/invoices">Factures</a>
+                        <a class="button button-outline" href="mailto:support@nexora.local">Contacter le support</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <a class="button button-primary submit-button" id="adminConsoleLink" href="/admin.html" hidden>Ouvrir la console admin</a>
+        <button class="button button-outline submit-button" id="logoutButton" type="button">Se déconnecter</button>
+    </section>
+</div>
+
+<div class="modal" id="detailModal" hidden>
+    <div class="modal-backdrop" data-close-modal="detailModal"></div>
+    <section class="detail-card" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+        <button class="modal-close detail-close" type="button" data-close-modal="detailModal" aria-label="Fermer">×</button>
+        <img class="detail-backdrop" id="detailBackdrop" src="/assets/images/hero.jpg" alt="">
+        <div class="detail-shade" aria-hidden="true"></div>
+        <div class="detail-layout">
+            <img class="detail-poster" id="detailPoster" src="/assets/images/poster-1.jpg" alt="">
+            <article class="detail-copy">
+                <p class="section-kicker" id="detailCategory">FILM</p>
+                <h2 id="detailTitle">Chargement du film...</h2>
+                <div class="detail-meta" id="detailMeta"></div>
+                <p class="detail-summary" id="detailSummary">Recherche des informations du programme.</p>
+                <dl class="detail-facts" id="detailFacts"></dl>
+                <div class="detail-actions">
+                    <button class="button button-primary" id="detailPlay" type="button">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z"></path></svg>
+                        Regarder
+                    </button>
+                </div>
+            </article>
+        </div>
+        <div class="detail-loading" id="detailLoading">
+            <span class="spinner large" aria-hidden="true"></span>
+            <p>Recherche de la fiche du film...</p>
+        </div>
+    </section>
+</div>
+
+<div class="modal" id="seriesModal" hidden>
+    <div class="modal-backdrop" data-close-modal="seriesModal"></div>
+    <section class="series-card" role="dialog" aria-modal="true" aria-labelledby="seriesTitle">
+        <button class="modal-close series-close" type="button" data-close-modal="seriesModal" aria-label="Fermer">×</button>
+        <header class="series-overview">
+            <img class="series-backdrop" id="seriesBackdrop" src="/assets/images/hero.jpg" alt="">
+            <div class="series-overview-shade" aria-hidden="true"></div>
+            <img class="series-poster" id="seriesPoster" src="/assets/images/poster-2.jpg" alt="">
+            <div class="series-copy">
+                <p class="section-kicker" id="seriesCategory">SÉRIE</p>
+                <h2 id="seriesTitle">Chargement de la série...</h2>
+                <p id="seriesSummary">Organisation des saisons et épisodes.</p>
+                <div class="series-meta">
+                    <span id="seriesSeasonCount">— saison</span>
+                    <span id="seriesEpisodeCount">— épisode</span>
+                    <span id="seriesRating" hidden></span>
+                    <span id="seriesRelease" hidden></span>
+                </div>
+                <dl class="series-credits" id="seriesCredits" hidden></dl>
+            </div>
+        </header>
+        <div class="series-body">
+            <div class="series-loading" id="seriesLoading">
+                <span class="spinner large" aria-hidden="true"></span>
+                <p>Classement des épisodes...</p>
+            </div>
+            <div id="seriesContent" hidden>
+                <div class="season-toolbar">
+                    <div>
+                        <p class="section-kicker">ÉPISODES</p>
+                        <h3 id="seasonTitle">Saison 1</h3>
+                    </div>
+                    <label class="season-select">
+                        <span>Saison</span>
+                        <select id="seriesSeasonSelect" aria-label="Choisir une saison"></select>
+                    </label>
+                </div>
+                <div class="episode-list" id="episodeList"></div>
+            </div>
+            <p class="series-error" id="seriesError" role="alert" hidden></p>
+        </div>
+    </section>
+</div>
+
+<div class="modal" id="playerModal" hidden>
+    <div class="modal-backdrop" data-close-modal="playerModal"></div>
+    <section class="player-card" role="dialog" aria-modal="true" aria-labelledby="playerTitle">
+        <button class="modal-close player-close" type="button" data-close-modal="playerModal" aria-label="Fermer">×</button>
+        <video id="streamPlayer" controls playsinline></video>
+        <div class="player-placeholder" id="playerPlaceholder">
+            <span class="spinner large" aria-hidden="true"></span>
+            <p>Préparation de votre programme...</p>
+        </div>
+        <div class="player-caption">
+            <div class="player-title-group">
+                <span class="live-badge" id="playerBadge">DIRECT</span>
+                <h2 id="playerTitle">Programme</h2>
+            </div>
+            <div class="player-tools">
+                <label class="player-quality">
+                    <span>Qualité</span>
+                    <select id="playerQuality" aria-label="Qualité de lecture">
+                        <option value="auto">Auto</option>
+                        <option value="data">480p</option>
+                        <option value="hd">720p</option>
+                        <option value="fullhd">1080p</option>
+                        <option value="uhd">Originale</option>
+                    </select>
+                </label>
+                <p id="playerMessage">Connexion au flux sécurisé Nexora.</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="/assets/vendor/mpegts.js" defer></script>
+    <script src="/assets/app.js?v=20260617-2" defer></script>
+</body>
+</html>

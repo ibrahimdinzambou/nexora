@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#09090a">
+    <meta name="description" content="Créez votre espace Nexora et activez la formule qui vous correspond.">
+    <title>Créer votre compte | Nexora</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/assets/signup.css?v=20260615-1">
+    <script src="/assets/signup.js?v=20260615-1" defer></script>
+</head>
+<body>
+<div class="signup-grain" aria-hidden="true"></div>
+
+<header class="signup-header">
+    <a class="signup-brand" href="/" aria-label="Retour à l'accueil Nexora">
+        <span>N</span>
+        <strong>NEXORA</strong>
+    </a>
+    <p>Déjà membre ? <a href="/watch.html?mode=login">Se connecter</a></p>
+</header>
+
+<main class="signup-shell">
+    <section class="signup-main" aria-labelledby="signupTitle">
+        <nav class="signup-steps" aria-label="Progression de l'inscription">
+            <div class="step complete"><span>1</span><p><small>OFFRE</small><strong id="stepPlanName">Chargement</strong></p></div>
+            <i></i>
+            <div class="step active"><span>2</span><p><small>COMPTE</small><strong>Vos informations</strong></p></div>
+            <i></i>
+            <div class="step"><span>3</span><p><small>CONFIRMATION</small><strong>Accès immédiat</strong></p></div>
+        </nav>
+
+        <div class="signup-intro" id="signupIntro">
+            <p class="eyebrow">BIENVENUE DANS NEXORA</p>
+            <h1 id="signupTitle">Créez un espace<br><em>qui vous ressemble.</em></h1>
+            <p>Une minute suffit. Votre formule et votre essai seront activés dès la création du compte.</p>
+        </div>
+
+        <form class="account-form" id="signupForm" novalidate>
+            <div class="form-section-heading">
+                <span>01</span>
+                <div>
+                    <h2>Votre identité</h2>
+                    <p>Ces informations permettent de personnaliser votre espace.</p>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <label class="signup-field" data-field="name">
+                    <span>Nom complet</span>
+                    <input name="name" type="text" autocomplete="name" placeholder="Ex. Amadou Diallo" minlength="2" required>
+                    <small class="field-error"></small>
+                </label>
+                <label class="signup-field" data-field="organizationName">
+                    <span>Nom de votre espace</span>
+                    <input name="organizationName" type="text" autocomplete="organization" placeholder="Ex. Maison Diallo" minlength="2" required>
+                    <small class="field-error"></small>
+                </label>
+                <label class="signup-field field-wide" data-field="email">
+                    <span>Adresse e-mail</span>
+                    <input name="email" type="email" autocomplete="email" placeholder="vous@exemple.com" required>
+                    <small class="field-error"></small>
+                </label>
+            </div>
+
+            <div class="form-section-heading security-heading">
+                <span>02</span>
+                <div>
+                    <h2>Protégez votre compte</h2>
+                    <p>Choisissez un mot de passe unique que vous n’utilisez pas ailleurs.</p>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <label class="signup-field password-field" data-field="password">
+                    <span>Mot de passe</span>
+                    <span class="password-input">
+                        <input id="passwordInput" name="password" type="password" autocomplete="new-password" placeholder="8 caractères minimum" minlength="8" required>
+                        <button class="password-toggle" type="button" data-password-toggle="passwordInput" aria-label="Afficher le mot de passe">Voir</button>
+                    </span>
+                    <small class="field-error"></small>
+                </label>
+                <label class="signup-field password-field" data-field="passwordConfirmation">
+                    <span>Confirmer le mot de passe</span>
+                    <span class="password-input">
+                        <input id="passwordConfirmation" name="passwordConfirmation" type="password" autocomplete="new-password" placeholder="Répétez le mot de passe" minlength="8" required>
+                        <button class="password-toggle" type="button" data-password-toggle="passwordConfirmation" aria-label="Afficher le mot de passe">Voir</button>
+                    </span>
+                    <small class="field-error"></small>
+                </label>
+            </div>
+
+            <div class="password-quality" aria-live="polite">
+                <div class="quality-bar"><i></i><i></i><i></i><i></i></div>
+                <p id="passwordQuality">Utilisez au moins 8 caractères, une majuscule et un chiffre.</p>
+            </div>
+
+            <label class="terms-check" data-field="terms">
+                <input name="terms" type="checkbox" required>
+                <span></span>
+                <p>J’accepte les conditions d’utilisation et la politique de confidentialité de Nexora.</p>
+            </label>
+            <small class="terms-error" id="termsError"></small>
+
+            <section class="otp-panel" id="otpPanel" hidden>
+                <p class="eyebrow">VERIFICATION EMAIL</p>
+                <h2>Entrez le code OTP.</h2>
+                <p>Nous avons envoye un code a <strong id="otpEmail">votre adresse email</strong>. Il permet d'activer votre compte avant la creation de la session.</p>
+                <label class="signup-field" data-field="code">
+                    <span>Code OTP</span>
+                    <input id="otpInput" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000">
+                    <small class="field-error"></small>
+                </label>
+                <button class="otp-resend" id="resendOtpButton" type="button">Renvoyer le code</button>
+            </section>
+
+            <div class="form-alert" id="formAlert" role="alert" hidden></div>
+
+            <button class="create-account-button" id="createAccountButton" type="submit">
+                <span id="submitLabel">Créer mon compte</span>
+                <i aria-hidden="true">→</i>
+                <b class="button-spinner" aria-hidden="true"></b>
+            </button>
+            <p class="secure-note"><span>✓</span> Connexion sécurisée. Vos identifiants ne sont jamais partagés avec vos fournisseurs.</p>
+        </form>
+
+        <section class="signup-success" id="signupSuccess" hidden aria-live="polite">
+            <div class="success-mark"><span>✓</span></div>
+            <p class="eyebrow">COMPTE CRÉÉ</p>
+            <h2>Bienvenue, <span id="successName">vous</span>.</h2>
+            <p>Votre espace <strong id="successOrganization"></strong> et votre formule <strong id="successPlan"></strong> sont prêts.</p>
+            <div class="success-details">
+                <div><small>STATUT</small><strong id="successStatus">Actif</strong></div>
+                <div><small>PROCHAINE ÉTAPE</small><strong>Ajouter vos sources</strong></div>
+            </div>
+            <a class="create-account-button success-button" href="/watch.html">
+                <span>Entrer dans mon espace</span><i aria-hidden="true">→</i>
+            </a>
+        </section>
+    </section>
+
+    <aside class="plan-summary" aria-labelledby="summaryTitle">
+        <div class="summary-top">
+            <p class="eyebrow">VOTRE SÉLECTION</p>
+            <button type="button" id="changePlanButton">Changer</button>
+        </div>
+        <div class="selected-plan">
+            <div class="selected-plan-name">
+                <span id="planMonogram">N</span>
+                <div><small>FORMULE</small><h2 id="summaryTitle">Chargement...</h2></div>
+            </div>
+            <div class="selected-plan-price">
+                <strong id="planPrice">—</strong>
+                <span id="planPeriod">/ mois</span>
+            </div>
+        </div>
+        <div class="trial-callout" id="trialCallout">
+            <span>✓</span>
+            <p><strong id="trialTitle">Essai inclus</strong><small id="trialCopy">Aucun paiement aujourd’hui.</small></p>
+        </div>
+        <ul class="summary-features" id="summaryFeatures"></ul>
+        <div class="summary-total">
+            <p><span>Total aujourd’hui</span><strong>0 FCFA</strong></p>
+            <small id="billingNote">La facturation commencera après la période d’essai.</small>
+        </div>
+        <div class="summary-assurance">
+            <span>?</span>
+            <p><strong>Besoin d’aide ?</strong><a href="mailto:support@nexora.local">Parler à l’équipe Nexora</a></p>
+        </div>
+    </aside>
+</main>
+
+<dialog class="plan-dialog" id="planDialog" aria-labelledby="planDialogTitle">
+    <div class="dialog-heading">
+        <div>
+            <p class="eyebrow">VOTRE FORMULE</p>
+            <h2 id="planDialogTitle">Choisissez votre rythme.</h2>
+        </div>
+        <button type="button" id="closePlanDialog" aria-label="Fermer">×</button>
+    </div>
+    <div class="plan-picker" id="planPicker"></div>
+</dialog>
+</body>
+</html>
