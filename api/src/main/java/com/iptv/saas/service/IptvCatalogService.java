@@ -659,10 +659,72 @@ public class IptvCatalogService {
                 && (account.playlistUrl == null || account.playlistUrl.isBlank())) {
             return "misconfigured";
         }
+        if (account.accountType == Enums.IptvAccountType.XTREAM
+                && (account.baseUrl == null || account.baseUrl.isBlank()
+                || account.username == null || account.username.isBlank()
+                || account.password == null || account.password.isBlank())) {
+            return "misconfigured";
+        }
         if (account.maxStreams > 0 && account.activeStreams >= account.maxStreams) {
             return "saturated";
         }
         return "ok";
+    }
+
+    public AccountAudit auditAccount(IptvAccount account) {
+        String localHealth = health(account);
+        if (List.of("disabled", "expired", "misconfigured").contains(localHealth)) {
+            return new AccountAudit(account.id, account.name, localHealth, 0, 0, 0, false, localHealth);
+        }
+
+        try {
+            M3uPlaylistService.Playlist playlist = account.accountType == Enums.IptvAccountType.M3U
+                    ? playlists.load(account)
+                    : xtream.load(account);
+            int entries = playlist.entries().size();
+            int series = playlist.series().size();
+            int categories = playlist.categories().size();
+            if (!hasDisplayableContent(playlist)) {
+                return new AccountAudit(
+                        account.id,
+                        account.name,
+                        "empty-catalog",
+                        entries,
+                        series,
+                        categories,
+                        false,
+                        "Aucun programme exploitable dans ce catalogue"
+                );
+            }
+            String status = "saturated".equals(localHealth) ? "saturated" : "ok";
+            String message = "saturated".equals(status)
+                    ? "Compte disponible mais limite de streams atteinte"
+                    : "Catalogue disponible";
+            return new AccountAudit(account.id, account.name, status, entries, series, categories, true, message);
+        } catch (ApiException exception) {
+            String status = exception.status().is4xxClientError() ? "misconfigured" : "catalog-unavailable";
+            return new AccountAudit(
+                    account.id,
+                    account.name,
+                    status,
+                    0,
+                    0,
+                    0,
+                    false,
+                    exception.getMessage()
+            );
+        } catch (RuntimeException exception) {
+            return new AccountAudit(
+                    account.id,
+                    account.name,
+                    "catalog-unavailable",
+                    0,
+                    0,
+                    0,
+                    false,
+                    exception.getMessage() == null ? exception.getClass().getSimpleName() : exception.getMessage()
+            );
+        }
     }
 
     @Transactional(readOnly = true)
@@ -694,6 +756,7 @@ public class IptvCatalogService {
                 .filter(account -> account.accountType == Enums.IptvAccountType.M3U
                         || account.accountType == Enums.IptvAccountType.XTREAM)
                 .filter(account -> account.expiresAt == null || account.expiresAt.isAfter(Instant.now()))
+                .filter(account -> catalogStatusVisible(account.lastHealthStatus))
                 .toList();
     }
 
@@ -720,6 +783,14 @@ public class IptvCatalogService {
                 M3uPlaylistService.Playlist playlist = account.accountType == Enums.IptvAccountType.M3U
                         ? playlists.load(account)
                         : xtream.load(account);
+                if (!hasDisplayableContent(playlist)) {
+                    LOGGER.warn(
+                            "Catalogue IPTV vide ignore pour le compte {} ({})",
+                            account.id,
+                            account.name
+                    );
+                    continue;
+                }
                 sources.add(new CatalogSource(account, playlist));
             } catch (RuntimeException exception) {
                 LOGGER.warn(
@@ -771,6 +842,22 @@ public class IptvCatalogService {
             );
         }
         return false;
+    }
+
+    private boolean hasDisplayableContent(M3uPlaylistService.Playlist playlist) {
+        return playlist != null && (!playlist.entries().isEmpty() || !playlist.series().isEmpty());
+    }
+
+    private boolean catalogStatusVisible(String status) {
+        String value = status == null ? "" : status.toLowerCase(Locale.ROOT);
+        return !List.of(
+                "disabled",
+                "expired",
+                "misconfigured",
+                "empty-catalog",
+                "catalog-unavailable",
+                "archived"
+        ).contains(value);
     }
 
     private List<SeriesSource> mergedSeries(List<CatalogSource> sources) {
@@ -1288,6 +1375,21 @@ public class IptvCatalogService {
     }
 
     public record StreamSelection(IptvAccount account, String streamUrl) {
+    }
+
+    public record AccountAudit(
+            Long accountId,
+            String accountName,
+            String status,
+            int entries,
+            int series,
+            int categories,
+            boolean displayable,
+            String message
+    ) {
+        public int contentCount() {
+            return entries + series;
+        }
     }
 
     public record CatalogAccessDescriptor(String categoryId, String categoryName, String contentType, boolean adult) {

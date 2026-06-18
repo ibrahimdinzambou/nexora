@@ -121,7 +121,6 @@ button {
 }
 
 .nav-link,
-.auth-tabs button,
 .footer button {
     padding: 0;
     border: 0;
@@ -2150,25 +2149,6 @@ body.compact-catalog .card-copy strong {
     color: var(--muted);
     font-size: 13px;
     line-height: 1.6;
-}
-
-.auth-tabs {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    margin-bottom: 25px;
-    border-bottom: 1px solid var(--line);
-}
-
-.auth-tabs button {
-    padding: 12px 5px;
-    color: var(--dim);
-    border-bottom: 2px solid transparent;
-    font-size: 12px;
-}
-
-.auth-tabs button.active {
-    color: var(--ink);
-    border-color: var(--accent);
 }
 
 .field {

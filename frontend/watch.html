@@ -158,8 +158,6 @@
     <p>La télévision qui suit votre rythme.</p>
     <nav aria-label="Liens secondaires">
         <a href="/">Présentation</a>
-        <a href="/api/docs">API</a>
-        <a href="/swagger-ui.html">Documentation</a>
         <a href="mailto:support@nexora.local">Assistance</a>
         <button type="button" id="footerAccountButton">Mon compte</button>
     </nav>
@@ -177,20 +175,7 @@
         <h2 id="authTitle">Bon retour parmi nous.</h2>
         <p id="authSubtitle">Connectez-vous pour accéder au direct et à votre catalogue.</p>
 
-        <div class="auth-tabs" id="authTabs">
-            <button class="active" type="button" data-auth-mode="login">Connexion</button>
-            <button type="button" data-auth-mode="register">Créer un compte</button>
-        </div>
-
         <form id="authForm">
-            <label class="field register-field" hidden>
-                <span>Nom complet</span>
-                <input name="name" type="text" autocomplete="name" placeholder="Votre nom">
-            </label>
-            <label class="field register-field" hidden>
-                <span>Organisation</span>
-                <input name="organizationName" type="text" autocomplete="organization" placeholder="Nom de votre espace">
-            </label>
             <label class="field">
                 <span>Adresse e-mail</span>
                 <input name="email" type="email" autocomplete="email" placeholder="vous@exemple.com" required>
@@ -209,7 +194,7 @@
                 <span class="spinner" aria-hidden="true"></span>
             </button>
         </form>
-        <p class="demo-hint">Compte de démonstration : <strong>test@example.com</strong> / <strong>password</strong></p>
+        <p class="demo-hint">Pas encore de compte ? <a href="/signup.html">Créer mon espace</a></p>
     </section>
 </div>
 

@@ -116,7 +116,6 @@ const elements = {
     resetFilters: document.querySelector("#resetFilters"),
     authModal: document.querySelector("#authModal"),
     authForm: document.querySelector("#authForm"),
-    authTabs: document.querySelector("#authTabs"),
     authTitle: document.querySelector("#authTitle"),
     authSubtitle: document.querySelector("#authSubtitle"),
     authSubmit: document.querySelector("#authSubmit"),
@@ -268,6 +267,12 @@ function setResilientImage(image, source, fallback) {
     image.dataset.retryCount = "0";
     image.onerror = () => retryCatalogImage(image, fallback);
     image.src = safeSource;
+}
+
+function bindResilientImages(scope) {
+    scope.querySelectorAll("img[data-fallback-image]").forEach((image) => {
+        setResilientImage(image, image.getAttribute("src"), image.dataset.fallbackImage);
+    });
 }
 
 function normalizeImageSource(source, fallback = "/assets/images/landscape-1.jpg") {
@@ -632,6 +637,7 @@ function renderCatalog() {
         ? renderHomeShowcase(items)
         : "";
     elements.catalogRows.innerHTML = homeShowcase + rows;
+    bindResilientImages(elements.catalogRows);
     elements.emptyState.hidden = Boolean(rows);
     updateCatalogHeading(items.length);
 }
@@ -690,7 +696,7 @@ function watchPosterCard(item) {
     const genre = item.categoryName || typeLabel(item.type);
     return `
         <button class="watch-poster-card" type="button" data-item-id="${escapeHtml(item.id)}" data-item-type="${item.type}" aria-label="${escapeHtml(`Ouvrir ${item.name}`)}">
-            <img src="${escapeHtml(item.image)}" alt="" decoding="async" onerror="retryCatalogImage(this, '/assets/images/poster-1.jpg')">
+            <img src="${escapeHtml(item.image)}" alt="" decoding="async" data-fallback-image="/assets/images/poster-1.jpg">
             <span class="watch-poster-year">${escapeHtml(year)}</span>
             <strong>${escapeHtml(item.name)}</strong>
             <small><span>${escapeHtml(genre)}</span><b>${escapeHtml(typeLabel(item.type))}</b></small>
@@ -701,7 +707,7 @@ function watchPosterCard(item) {
 function watchOrbitCard(item) {
     return `
         <button class="watch-orbit-card" type="button" data-item-id="${escapeHtml(item.id)}" data-item-type="${item.type}" aria-label="${escapeHtml(`Ouvrir ${item.name}`)}">
-            <span><img src="${escapeHtml(item.image)}" alt="" decoding="async" onerror="retryCatalogImage(this, '/assets/images/landscape-1.jpg')"></span>
+            <span><img src="${escapeHtml(item.image)}" alt="" decoding="async" data-fallback-image="/assets/images/landscape-1.jpg"></span>
             <strong>${escapeHtml(item.name)}</strong>
             <small>${escapeHtml(typeLabel(item.type))}</small>
         </button>
@@ -868,7 +874,7 @@ function posterMediaCard(item) {
     return `
         <button class="media-card poster-media-card ${item.type}" type="button" data-item-id="${escapeHtml(item.id)}" data-item-type="${item.type}" aria-label="${escapeHtml(actionLabel)}">
             ${addonBadge}
-            <img src="${escapeHtml(item.image)}" alt="" decoding="async" onerror="retryCatalogImage(this, '/assets/images/poster-1.jpg')">
+            <img src="${escapeHtml(item.image)}" alt="" decoding="async" data-fallback-image="/assets/images/poster-1.jpg">
             <span class="poster-card-copy">
                 <strong>${escapeHtml(item.name)}</strong>
                 <span>${escapeHtml(meta)}</span>
@@ -898,7 +904,7 @@ function mediaCard(item) {
         <button class="media-card ${item.type === "series" ? "series" : ""}" type="button" data-item-id="${escapeHtml(item.id)}" data-item-type="${item.type}" aria-label="${escapeHtml(actionLabel)}">
             ${live}
             ${addonBadge}
-            <img src="${escapeHtml(item.image)}" alt="" decoding="async" onerror="retryCatalogImage(this, '/assets/images/landscape-1.jpg')">
+            <img src="${escapeHtml(item.image)}" alt="" decoding="async" data-fallback-image="/assets/images/landscape-1.jpg">
             <span class="card-content">
                 <span class="card-copy">
                     <strong>${escapeHtml(item.name)}</strong>
@@ -1037,7 +1043,7 @@ function renderSearchSuggestions(forceOpen = false) {
                             data-search-index="${index}"
                         >
                             <span class="search-result-image">
-                                <img src="${escapeHtml(item.image)}" alt="" onerror="retryCatalogImage(this, '/assets/images/landscape-1.jpg')">
+                                <img src="${escapeHtml(item.image)}" alt="" data-fallback-image="/assets/images/landscape-1.jpg">
                             </span>
                             <span class="search-result-copy">
                                 <strong>${escapeHtml(item.name)}</strong>
@@ -1069,6 +1075,7 @@ function renderSearchSuggestions(forceOpen = false) {
         ${list}
         ${showAll}
     `;
+    bindResilientImages(elements.searchPanel);
     elements.searchPanel.hidden = false;
     elements.searchShell.classList.add("open");
     elements.searchInput.setAttribute("aria-expanded", "true");
@@ -1202,29 +1209,16 @@ function closeModal(id) {
     }
 }
 
-function setAuthMode(mode) {
-    state.authMode = mode;
+function setAuthMode() {
+    state.authMode = "login";
     state.twoFactorEmail = null;
     state.emailVerificationEmail = null;
     elements.authError.hidden = true;
     elements.twoFactorField.hidden = true;
-    elements.authTabs.hidden = false;
     elements.twoFactorField.querySelector("input").required = false;
-
-    const register = mode === "register";
-    document.querySelectorAll(".register-field").forEach((field) => {
-        field.hidden = !register;
-        field.querySelector("input").required = register;
-    });
-
-    elements.authTabs.querySelectorAll("button").forEach((button) => (
-        button.classList.toggle("active", button.dataset.authMode === mode)
-    ));
-    elements.authTitle.textContent = register ? "Votre écran vous attend." : "Bon retour parmi nous.";
-    elements.authSubtitle.textContent = register
-        ? "Créez votre espace client pour démarrer votre expérience."
-        : "Connectez-vous pour accéder au direct et à votre catalogue.";
-    elements.authSubmit.firstChild.textContent = register ? "Créer mon compte " : "Se connecter ";
+    elements.authTitle.textContent = "Bon retour parmi nous.";
+    elements.authSubtitle.textContent = "Connectez-vous pour accéder au direct et à votre catalogue.";
+    elements.authSubmit.firstChild.textContent = "Se connecter ";
 }
 
 function requestLogin(message, afterLogin = null) {
@@ -1265,12 +1259,7 @@ async function submitAuth(event) {
                 email: formData.get("email"),
                 password: formData.get("password")
             };
-            if (state.authMode === "register") {
-                payload.name = formData.get("name");
-                payload.organizationName = formData.get("organizationName");
-            }
-
-            data = await api(`/auth/${state.authMode}`, {
+            data = await api("/auth/login", {
                 method: "POST",
                 body: JSON.stringify(payload)
             });
@@ -1278,7 +1267,6 @@ async function submitAuth(event) {
 
         if (data.requiresEmailVerification) {
             state.emailVerificationEmail = data.email;
-            elements.authTabs.hidden = true;
             elements.twoFactorField.hidden = false;
             elements.twoFactorField.querySelector("input").required = true;
             elements.authTitle.textContent = "Verification de votre email";
@@ -1289,7 +1277,6 @@ async function submitAuth(event) {
 
         if (data.requiresTwoFactor) {
             state.twoFactorEmail = data.email;
-            elements.authTabs.hidden = true;
             elements.twoFactorField.hidden = false;
             elements.twoFactorField.querySelector("input").required = true;
             elements.authTitle.textContent = "Vérification en deux étapes";
@@ -1299,18 +1286,6 @@ async function submitAuth(event) {
         }
 
         await applySession(data);
-        if (state.authMode === "register" && state.requestedPlan) {
-            try {
-                state.subscription = await api("/billing/change-plan", {
-                    method: "POST",
-                    body: JSON.stringify({ planCode: state.requestedPlan })
-                });
-                await refreshProfile();
-                updateAccountUi();
-            } catch (error) {
-                showToast(error.message || "La formule pourra être choisie depuis votre espace.", true);
-            }
-        }
         const pendingAction = state.pendingAuthAction;
         state.pendingAuthAction = null;
         closeModal("authModal");
@@ -1766,7 +1741,7 @@ function renderSeriesSeason(seasonNumber) {
             <button class="episode-row" type="button" data-episode-id="${escapeHtml(episode.id)}" aria-label="Regarder ${escapeHtml(episode.name)}">
                 <span class="episode-number">${episodeNumber}</span>
                 <span class="episode-thumb">
-                    <img src="${escapeHtml(image)}" alt="" decoding="async" onerror="retryCatalogImage(this, '/assets/images/landscape-1.jpg')">
+                    <img src="${escapeHtml(image)}" alt="" decoding="async" data-fallback-image="/assets/images/landscape-1.jpg">
                 </span>
                 <span class="episode-copy">
                     <strong>${escapeHtml(episode.name || `Épisode ${episodeNumber}`)}</strong>
@@ -1779,6 +1754,7 @@ function renderSeriesSeason(seasonNumber) {
             </button>
         `;
     }).join("");
+    bindResilientImages(elements.episodeList);
 }
 
 function setOptionalText(element, value) {
@@ -2613,15 +2589,6 @@ elements.resetFilters.addEventListener("click", () => {
     state.activeLanguage = "";
     renderLanguageFilter();
     setFilter("all");
-});
-elements.authTabs.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-auth-mode]");
-    if (!button) return;
-    if (button.dataset.authMode === "register") {
-        window.location.href = "/signup.html";
-        return;
-    }
-    setAuthMode(button.dataset.authMode);
 });
 elements.authForm.addEventListener("submit", submitAuth);
 elements.settingsNav.addEventListener("click", (event) => {

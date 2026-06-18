@@ -19,7 +19,7 @@ spring:
     password:
   h2:
     console:
-      enabled: true
+      enabled: ${H2_CONSOLE_ENABLED:false}
       path: /h2-console
   jpa:
     hibernate:
@@ -63,6 +63,7 @@ app:
   security:
     token-ttl-hours: ${TOKEN_TTL_HOURS:168}
     require-email-verification: ${REQUIRE_EMAIL_VERIFICATION:true}
+    public-api-docs: ${PUBLIC_API_DOCS_ENABLED:false}
     email-otp-ttl-minutes: ${EMAIL_OTP_TTL:15}
     two-factor-code-ttl-minutes: ${TWO_FACTOR_CODE_TTL:10}
   billing:
@@ -102,8 +103,8 @@ app:
       bot-token: ${TELEGRAM_ALERTS_BOT_TOKEN:${TELEGRAM_BOT_TOKEN:}}
       chat-id: ${TELEGRAM_ALERTS_CHAT_ID:${TELEGRAM_CHAT_ID:}}
       iptv-alerts-enabled: ${TELEGRAM_IPTV_ALERTS_ENABLED:true}
-      iptv-alert-interval-ms: ${TELEGRAM_IPTV_ALERT_INTERVAL_MS:300000}
-      iptv-alert-initial-delay-ms: ${TELEGRAM_IPTV_ALERT_INITIAL_DELAY_MS:30000}
+      iptv-daily-cron: ${TELEGRAM_IPTV_DAILY_CRON:0 0 0 * * *}
+      iptv-daily-zone: ${TELEGRAM_IPTV_DAILY_ZONE:Africa/Lagos}
       iptv-expiry-alert-days: ${TELEGRAM_IPTV_EXPIRY_ALERT_DAYS:7}
       iptv-saturation-threshold-percent: ${TELEGRAM_IPTV_SATURATION_THRESHOLD_PERCENT:90}
     admin:

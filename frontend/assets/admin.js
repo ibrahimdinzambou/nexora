@@ -105,6 +105,7 @@ const el = {
     accountResultMeta: document.querySelector("#accountResultMeta"),
     accountPageSize: document.querySelector("#accountPageSize"),
     accountPagination: document.querySelector("#accountPagination"),
+    runIptvAuditButton: document.querySelector("#runIptvAuditButton"),
     sessionsTable: document.querySelector("#sessionsTable"),
     sessionCountLabel: document.querySelector("#sessionCountLabel"),
     customersHead: document.querySelector("#customersHead"),
@@ -410,7 +411,16 @@ async function loadIptv() {
 }
 
 function accountIsHealthy(account) {
-    return account.active && !account.disabled && !["expired", "disabled", "stream-failed", "misconfigured"].includes(String(account.lastHealthStatus || "").toLowerCase());
+    return account.active && !account.disabled && ![
+        "expired",
+        "disabled",
+        "stream-failed",
+        "misconfigured",
+        "empty-catalog",
+        "catalog-unavailable",
+        "expires-soon",
+        "saturated"
+    ].includes(String(account.lastHealthStatus || "").toLowerCase());
 }
 
 function renderAccounts() {
@@ -1375,6 +1385,18 @@ async function accountAction(action, id) {
     await loadIptv();
 }
 
+async function runIptvAudit() {
+    if (!el.runIptvAuditButton) return;
+    el.runIptvAuditButton.disabled = true;
+    try {
+        const summary = await api("/admin/accounts/audit", { method: "POST" });
+        showToast(`Audit termine: ${summary.alerts || 0} alerte(s), ${summary.emptyCatalogs || 0} catalogue(s) vide(s).`);
+        await loadIptv();
+    } finally {
+        el.runIptvAuditButton.disabled = false;
+    }
+}
+
 async function paymentAction(action, id) {
     let body;
     if (action === "reject") {
@@ -1523,6 +1545,7 @@ document.querySelectorAll("[data-billing-tab]").forEach(button => button.addEven
 
 el.loginForm.addEventListener("submit", login);
 el.refresh.addEventListener("click", () => switchView(state.view));
+el.runIptvAuditButton?.addEventListener("click", () => runIptvAudit().catch(error => showToast(error.message, true)));
 el.search.addEventListener("input", () => filterCurrentView(el.search.value));
 el.ticketStatusFilter.addEventListener("change", renderTickets);
 el.smtpTestForm.addEventListener("submit", async event => {

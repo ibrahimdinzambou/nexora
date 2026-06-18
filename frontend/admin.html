@@ -22,8 +22,8 @@
         <p class="admin-kicker">ACCÈS OPÉRATEUR</p>
         <h1>Pilotez le réseau.<br><em>Gardez le signal.</em></h1>
         <p class="gate-copy">Infrastructure IPTV, clients, revenus et support depuis un seul poste de contrôle.</p>
-        <label class="admin-field"><span>Adresse e-mail</span><input name="email" type="email" autocomplete="email" value="admin@example.com" required></label>
-        <label class="admin-field"><span>Mot de passe</span><input name="password" type="password" autocomplete="current-password" value="password" required></label>
+        <label class="admin-field"><span>Adresse e-mail</span><input name="email" type="email" autocomplete="email" placeholder="admin@exemple.com" required></label>
+        <label class="admin-field"><span>Mot de passe</span><input name="password" type="password" autocomplete="current-password" placeholder="Votre mot de passe" required></label>
         <label class="admin-field two-factor-field" id="twoFactorField" hidden>
             <span>Code 2FA</span>
             <input name="twoFactorCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000">
@@ -96,6 +96,7 @@
         <section class="admin-view" data-admin-view="iptv">
             <div class="view-actions">
                 <div class="segmented-control" data-filter-group="accounts"><button class="active" type="button" data-filter-value="all">Tous</button><button type="button" data-filter-value="healthy">Opérationnels</button><button type="button" data-filter-value="warning">À surveiller</button></div>
+                <button class="admin-button admin-button-small" id="runIptvAuditButton" type="button">Audit IPTV</button>
                 <button class="admin-button admin-button-primary" type="button" data-open-modal="account">+ Ajouter un compte</button>
             </div>
             <div class="account-listbar">

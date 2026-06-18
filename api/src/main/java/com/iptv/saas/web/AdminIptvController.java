@@ -6,6 +6,7 @@ import com.iptv.saas.repository.UserSessionRepository;
 import com.iptv.saas.security.SecurityUtils;
 import com.iptv.saas.service.IptvCatalogService;
 import com.iptv.saas.service.StreamingService;
+import com.iptv.saas.service.TelegramIptvHealthMonitor;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -27,17 +28,20 @@ public class AdminIptvController {
     private final UserSessionRepository sessions;
     private final IptvCatalogService catalog;
     private final StreamingService streaming;
+    private final TelegramIptvHealthMonitor healthMonitor;
 
     public AdminIptvController(
             IptvAccountRepository accounts,
             UserSessionRepository sessions,
             IptvCatalogService catalog,
-            StreamingService streaming
+            StreamingService streaming,
+            TelegramIptvHealthMonitor healthMonitor
     ) {
         this.accounts = accounts;
         this.sessions = sessions;
         this.catalog = catalog;
         this.streaming = streaming;
+        this.healthMonitor = healthMonitor;
     }
 
     @GetMapping("/stats")
@@ -103,9 +107,19 @@ public class AdminIptvController {
     public Object accountStatus(@PathVariable Long id) {
         var account = accounts.findById(id).orElseThrow(() -> ApiException.notFound("Compte IPTV introuvable"));
         var body = Responses.map();
+        var audit = catalog.auditAccount(account);
+        account.lastHealthStatus = audit.status();
+        account.failureCount = audit.displayable() ? 0 : account.failureCount + 1;
+        accounts.save(account);
         body.put("local", ApiMappers.iptvAccount(account));
-        body.put("remote", catalog.health(account));
+        body.put("remote", audit.status());
+        body.put("audit", audit);
         return Responses.ok(body);
+    }
+
+    @PostMapping("/accounts/audit")
+    public Object auditAccounts() {
+        return Responses.ok(healthMonitor.runDailyAudit());
     }
 
     @PostMapping("/accounts/{id}/sync-limits")
