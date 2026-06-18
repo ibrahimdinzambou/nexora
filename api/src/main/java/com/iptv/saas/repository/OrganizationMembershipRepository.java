@@ -18,4 +18,6 @@ public interface OrganizationMembershipRepository extends JpaRepository<Organiza
     boolean existsByOrganizationAndUser(Organization organization, UserEntity user);
 
     void deleteByOrganizationAndUser(Organization organization, UserEntity user);
+
+    void deleteByUser(UserEntity user);
 }

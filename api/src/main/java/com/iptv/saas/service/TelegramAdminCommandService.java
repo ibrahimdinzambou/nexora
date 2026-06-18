@@ -91,6 +91,7 @@ public class TelegramAdminCommandService {
     private final TorBoxTorrentResolver torBox;
     private final OpsService ops;
     private final AuditService audit;
+    private final NotificationService notifications;
     private final Optional<BuildProperties> buildProperties;
 
     public TelegramAdminCommandService(
@@ -113,6 +114,7 @@ public class TelegramAdminCommandService {
             TorBoxTorrentResolver torBox,
             OpsService ops,
             AuditService audit,
+            NotificationService notifications,
             Optional<BuildProperties> buildProperties
     ) {
         this.catalog = catalog;
@@ -134,6 +136,7 @@ public class TelegramAdminCommandService {
         this.torBox = torBox;
         this.ops = ops;
         this.audit = audit;
+        this.notifications = notifications;
         this.buildProperties = buildProperties;
     }
 
@@ -745,6 +748,7 @@ public class TelegramAdminCommandService {
         UserEntity user = userById(parseLong(parts.get(0), "userId"));
         String body = require(parts.get(1), "message");
         mail.send(user.email, "Message Nexora", body);
+        notifications.notifyUser(user, "Message Nexora", body, "message", "/watch.html");
         audit.log(actor, "telegram.user.message", "User", user.id, body);
         return text("Message envoye a " + user.email);
     }

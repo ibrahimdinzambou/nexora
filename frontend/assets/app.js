@@ -83,6 +83,9 @@ const state = {
     searchResultQuery: "",
     searchSuggestions: [],
     searchActiveIndex: -1,
+    notifications: [],
+    unreadNotifications: 0,
+    notificationsOpen: false,
     activeSeries: null,
     activeDetail: null,
     requestedPlan: launchParams.get("plan")
@@ -95,6 +98,11 @@ const elements = {
     searchInput: document.querySelector("#searchInput"),
     searchClear: document.querySelector("#searchClear"),
     searchPanel: document.querySelector("#searchSuggestions"),
+    notificationButton: document.querySelector("#notificationButton"),
+    notificationDot: document.querySelector("#notificationDot"),
+    notificationPanel: document.querySelector("#notificationPanel"),
+    notificationList: document.querySelector("#notificationList"),
+    notificationReadAll: document.querySelector("#notificationReadAll"),
     accountButton: document.querySelector("#accountButton"),
     accountLabel: document.querySelector("#accountLabel"),
     accountAvatar: document.querySelector("#accountAvatar"),
@@ -636,10 +644,131 @@ function renderCatalog() {
     const homeShowcase = !searching && state.activeType === "all"
         ? renderHomeShowcase(items)
         : "";
-    elements.catalogRows.innerHTML = homeShowcase + rows;
+    const libraryFeature = !searching && ["movie", "series"].includes(state.activeType)
+        ? renderLibraryFeature(items.filter((item) => item.type === state.activeType))
+        : "";
+    elements.catalogRows.innerHTML = homeShowcase + libraryFeature + rows;
     bindResilientImages(elements.catalogRows);
     elements.emptyState.hidden = Boolean(rows);
     updateCatalogHeading(items.length);
+}
+
+async function loadNotifications() {
+    if (!state.token) {
+        state.notifications = [];
+        state.unreadNotifications = 0;
+        renderNotifications();
+        return;
+    }
+    try {
+        const inbox = await api("/notifications");
+        state.notifications = inbox.items || [];
+        state.unreadNotifications = Number(inbox.unreadCount || 0);
+        renderNotifications();
+    } catch (error) {
+        if (error.status === 401) {
+            clearSession();
+        }
+    }
+}
+
+function renderNotifications() {
+    updateNotificationBadge();
+    if (!elements.notificationList) return;
+    if (!state.notifications.length) {
+        elements.notificationList.innerHTML = `<p class="notification-empty">Aucune notification pour le moment.</p>`;
+        return;
+    }
+    elements.notificationList.innerHTML = state.notifications.map((notification) => `
+        <button class="notification-item ${notification.readAt ? "" : "unread"}" type="button" data-notification-id="${notification.id}" data-target-url="${escapeHtml(notification.targetUrl || "")}">
+            <strong>${escapeHtml(notification.title)}</strong>
+            <p>${escapeHtml(notification.body)}</p>
+            <time>${escapeHtml(notificationDate(notification.publishedAt))}</time>
+        </button>
+    `).join("");
+}
+
+function updateNotificationBadge() {
+    if (!elements.notificationDot) return;
+    const count = Number(state.unreadNotifications || 0);
+    elements.notificationDot.hidden = count <= 0;
+    if (count > 0) {
+        elements.notificationDot.textContent = count > 9 ? "9+" : String(count);
+        elements.notificationDot.dataset.count = String(count);
+    } else {
+        elements.notificationDot.textContent = "";
+        delete elements.notificationDot.dataset.count;
+    }
+}
+
+function setNotificationsOpen(open) {
+    state.notificationsOpen = Boolean(open);
+    if (elements.notificationPanel) {
+        elements.notificationPanel.hidden = !state.notificationsOpen;
+    }
+    if (elements.notificationButton) {
+        elements.notificationButton.setAttribute("aria-expanded", String(state.notificationsOpen));
+    }
+}
+
+async function toggleNotifications() {
+    if (!state.user) {
+        requestLogin("Connectez-vous pour voir vos notifications.", toggleNotifications);
+        return;
+    }
+    const opening = !state.notificationsOpen;
+    setNotificationsOpen(opening);
+    if (opening) {
+        await loadNotifications();
+    }
+}
+
+async function markNotificationRead(id, targetUrl) {
+    const notification = state.notifications.find((item) => String(item.id) === String(id));
+    if (notification && !notification.readAt) {
+        try {
+            const updated = await api(`/notifications/${id}/read`, { method: "POST" });
+            notification.readAt = updated.readAt || new Date().toISOString();
+            state.unreadNotifications = Math.max(0, state.unreadNotifications - 1);
+            renderNotifications();
+        } catch (error) {
+            showToast(error.message, true);
+            return;
+        }
+    }
+    setNotificationsOpen(false);
+    if (targetUrl && targetUrl !== window.location.pathname) {
+        window.location.href = targetUrl;
+    }
+}
+
+async function markAllNotificationsRead() {
+    if (!state.token || state.unreadNotifications <= 0) return;
+    try {
+        await api("/notifications/read-all", { method: "POST" });
+        state.notifications = state.notifications.map((notification) => ({
+            ...notification,
+            readAt: notification.readAt || new Date().toISOString()
+        }));
+        state.unreadNotifications = 0;
+        renderNotifications();
+    } catch (error) {
+        showToast(error.message, true);
+    }
+}
+
+function notificationDate(value) {
+    if (!value) return "";
+    try {
+        return new Intl.DateTimeFormat("fr", {
+            day: "2-digit",
+            month: "short",
+            hour: "2-digit",
+            minute: "2-digit"
+        }).format(new Date(value));
+    } catch {
+        return "";
+    }
 }
 
 function renderHomeShowcase(items) {
@@ -682,6 +811,48 @@ function renderHomeShowcase(items) {
             </div>
             <div class="watch-orbit-rail" id="watchOrbitRail">
                 ${orbitItems.map(watchOrbitCard).join("")}
+            </div>
+        </section>
+    `;
+}
+
+function renderLibraryFeature(items) {
+    const unique = uniqueCatalogItems(items).slice(0, 5);
+    if (!unique.length) return "";
+    const [lead, ...sideItems] = unique;
+    const type = lead.type || state.activeType;
+    const kicker = type === "series" ? "SERIES A SUIVRE" : "CINEMA NEXORA";
+    const title = type === "series" ? "Votre prochaine saison commence ici" : "Films disponibles maintenant";
+    const leadMeta = [
+        lead.releaseYear || lead.year,
+        lead.categoryName,
+        type === "series" && lead.episodeCount ? `${lead.episodeCount} episodes` : ""
+    ].filter(Boolean).join(" · ");
+
+    return `
+        <section class="library-feature library-feature-${type}" aria-label="${escapeHtml(title)}">
+            <button class="library-feature-lead" type="button" data-item-id="${escapeHtml(lead.id)}" data-item-type="${type}">
+                <img src="${escapeHtml(lead.image)}" alt="" decoding="async" data-fallback-image="/assets/images/poster-1.jpg">
+                <span>
+                    <small>${escapeHtml(kicker)}</small>
+                    <strong>${escapeHtml(lead.name)}</strong>
+                    <em>${escapeHtml(leadMeta || typeLabel(type))}</em>
+                </span>
+            </button>
+            <div class="library-feature-copy">
+                <p class="section-kicker">${escapeHtml(kicker)}</p>
+                <h3>${escapeHtml(title)}</h3>
+                <div class="library-feature-list">
+                    ${sideItems.map((item) => `
+                        <button type="button" data-item-id="${escapeHtml(item.id)}" data-item-type="${escapeHtml(item.type)}">
+                            <img src="${escapeHtml(item.image)}" alt="" decoding="async" data-fallback-image="/assets/images/poster-1.jpg">
+                            <span>
+                                <strong>${escapeHtml(item.name)}</strong>
+                                <small>${escapeHtml(item.categoryName || typeLabel(item.type))}</small>
+                            </span>
+                        </button>
+                    `).join("")}
+                </div>
             </div>
         </section>
     `;
@@ -1316,7 +1487,7 @@ async function applySession(data) {
     state.subscription = data.subscription || null;
     await refreshProfile();
     updateAccountUi();
-    await loadCatalog();
+    await Promise.all([loadCatalog(), loadNotifications()]);
 }
 
 async function restoreSession() {
@@ -1333,7 +1504,7 @@ async function restoreSession() {
     try {
         await refreshProfile();
         updateAccountUi();
-        await loadCatalog();
+        await Promise.all([loadCatalog(), loadNotifications()]);
     } catch {
         clearSession();
         if (state.authRequired) {
@@ -1381,6 +1552,7 @@ function updateAccountUi() {
     elements.adminConsoleLink.hidden = !["SUPER_ADMIN", "ADMIN", "BILLING", "SUPPORT", "OPS"].includes(state.user?.role);
     applyProfileSettings();
     updateCatalogStatus();
+    updateNotificationBadge();
 
     if (!connected) return;
 
@@ -1412,8 +1584,12 @@ function clearSession() {
     state.languages = [];
     state.activeLanguage = "";
     state.pendingAuthAction = null;
+    state.notifications = [];
+    state.unreadNotifications = 0;
+    setNotificationsOpen(false);
     localStorage.removeItem(TOKEN_KEY);
     updateAccountUi();
+    renderNotifications();
     renderLanguageFilter();
 }
 
@@ -2474,6 +2650,31 @@ elements.searchPanel.addEventListener("click", (event) => {
     if (event.target.closest("[data-search-all]")) {
         commitSearch();
     }
+});
+
+elements.notificationButton?.addEventListener("click", (event) => {
+    event.stopPropagation();
+    toggleNotifications();
+});
+
+elements.notificationReadAll?.addEventListener("click", (event) => {
+    event.stopPropagation();
+    markAllNotificationsRead();
+});
+
+elements.notificationList?.addEventListener("click", (event) => {
+    const item = event.target.closest("[data-notification-id]");
+    if (!item) return;
+    markNotificationRead(item.dataset.notificationId, item.dataset.targetUrl);
+});
+
+document.addEventListener("click", (event) => {
+    if (!state.notificationsOpen) return;
+    if (elements.notificationPanel?.contains(event.target)
+        || elements.notificationButton?.contains(event.target)) {
+        return;
+    }
+    setNotificationsOpen(false);
 });
 
 elements.genreList.addEventListener("click", async (event) => {

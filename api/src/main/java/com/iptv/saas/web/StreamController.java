@@ -185,20 +185,6 @@ public class StreamController {
     }
 
     private void verifySessionReadable(UserSession session) {
-        String quality = effectiveQuality(session);
-        if (remux.requiresProcessing(session.streamUrl, quality)) {
-            try (var stream = remux.open(relay.openForRemux(session.streamUrl), quality)) {
-                return;
-            } catch (ApiException exception) {
-                if (!remux.requiresRemux(session.streamUrl)
-                        && remux.requiresTranscode(quality)
-                        && likelyMpegTs(session.streamUrl)) {
-                    verifyDirectReadable(session);
-                    return;
-                }
-                throw exception;
-            }
-        }
         verifyDirectReadable(session);
     }
 
@@ -206,12 +192,7 @@ public class StreamController {
         if (looksLikeHlsPlaylistUrl(session.streamUrl)) {
             return;
         }
-        var remote = relay.open(session.streamUrl, null);
-        try (var ignored = remote.body()) {
-            // relay.open already validates that the upstream sends at least one byte.
-        } catch (IOException exception) {
-            throw ApiException.serviceUnavailable("Le fournisseur a interrompu la verification du flux");
-        }
+        relay.probe(session.streamUrl, false);
     }
 
     private ResponseEntity<StreamingResponseBody> proxyResponse(
@@ -322,13 +303,13 @@ public class StreamController {
     }
 
     private void copyMedia(InputStream input, OutputStream output) throws IOException {
-        byte[] buffer = new byte[131_072];
+        byte[] buffer = new byte[262_144];
         int pendingFlush = 0;
         int read;
         while ((read = input.read(buffer)) != -1) {
             output.write(buffer, 0, read);
             pendingFlush += read;
-            if (pendingFlush >= 524_288) {
+            if (pendingFlush >= 1_048_576) {
                 output.flush();
                 pendingFlush = 0;
             }

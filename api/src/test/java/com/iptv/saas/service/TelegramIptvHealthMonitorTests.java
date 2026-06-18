@@ -26,7 +26,8 @@ class TelegramIptvHealthMonitorTests {
                 90,
                 accounts,
                 catalog,
-                telegram
+                telegram,
+                mock(NotificationService.class)
         );
 
         IptvAccount working = account(10L, "Source OK");

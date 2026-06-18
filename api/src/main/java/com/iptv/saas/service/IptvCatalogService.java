@@ -556,7 +556,7 @@ public class IptvCatalogService {
                     || requestedSource.account().activeStreams < requestedSource.account().maxStreams)) {
                 candidatesByAccount.put(requestedSource.account().id, requestedSource);
                 if (requestedSource.account().activeStreams == 0
-                        && !hasRecentStreamFailure(requestedSource.account())) {
+                        && reliabilityPenalty(requestedSource.account()) == 0) {
                     return new StreamSelection(
                             requestedSource.account(),
                             requestedSource.entry().streamUrl()
@@ -742,9 +742,17 @@ public class IptvCatalogService {
         if (candidates.isEmpty()) {
             throw ApiException.serviceUnavailable("Aucun compte IPTV disponible");
         }
-        List<IptvAccount> preferredCandidates = accountsWithoutRecentStreamFailures(candidates);
-        double minimumLoad = preferredCandidates.stream().mapToDouble(this::loadRatio).min().orElse(0);
+        List<IptvAccount> preferredCandidates = candidates.stream()
+                .sorted(streamAccountComparator())
+                .toList();
+        int bestReliability = preferredCandidates.stream().mapToInt(this::reliabilityPenalty).min().orElse(0);
+        double minimumLoad = preferredCandidates.stream()
+                .filter(account -> reliabilityPenalty(account) == bestReliability)
+                .mapToDouble(this::loadRatio)
+                .min()
+                .orElse(0);
         List<IptvAccount> tied = preferredCandidates.stream()
+                .filter(account -> reliabilityPenalty(account) == bestReliability)
                 .filter(account -> Double.compare(loadRatio(account), minimumLoad) == 0)
                 .sorted(Comparator.comparing(account -> account.id))
                 .toList();
@@ -811,6 +819,7 @@ public class IptvCatalogService {
         return catalogAccounts.stream()
                 .sorted(Comparator
                         .comparing((IptvAccount account) -> !hasReusableCatalog(account))
+                        .thenComparingInt(this::reliabilityPenalty)
                         .thenComparingDouble(this::loadRatio)
                         .thenComparing(account -> account.id))
                 .toList();
@@ -921,7 +930,8 @@ public class IptvCatalogService {
                         || !Objects.equals(account.id, requested.account().id))
                 .filter(account -> account.maxStreams <= 0 || account.activeStreams < account.maxStreams)
                 .sorted(Comparator
-                        .comparingDouble(this::loadRatio)
+                        .comparingInt(this::reliabilityPenalty)
+                        .thenComparingDouble(this::loadRatio)
                         .thenComparing(account -> account.id))
                 .toList();
         for (CatalogSource source : availableSources(availableAccounts)) {
@@ -1035,6 +1045,11 @@ public class IptvCatalogService {
         if (leftFailed != rightFailed) {
             return leftFailed ? right : left;
         }
+        int leftReliability = reliabilityPenalty(left.account());
+        int rightReliability = reliabilityPenalty(right.account());
+        if (leftReliability != rightReliability) {
+            return leftReliability < rightReliability ? left : right;
+        }
         boolean leftAvailable = left.account().maxStreams <= 0
                 || left.account().activeStreams < left.account().maxStreams;
         boolean rightAvailable = right.account().maxStreams <= 0
@@ -1058,13 +1073,25 @@ public class IptvCatalogService {
         if (candidates.isEmpty()) {
             throw ApiException.serviceUnavailable("Aucun compte IPTV ne peut servir ce contenu");
         }
-        List<EntrySource> preferredCandidates = entriesWithoutRecentStreamFailures(candidates);
+        List<EntrySource> preferredCandidates = candidates.stream()
+                .sorted(Comparator
+                        .comparingInt((EntrySource source) -> reliabilityPenalty(source.account()))
+                        .thenComparingDouble(source -> loadRatio(source.account()))
+                        .thenComparing(source -> source.account().id))
+                .toList();
+        int bestReliability = preferredCandidates.stream()
+                .map(EntrySource::account)
+                .mapToInt(this::reliabilityPenalty)
+                .min()
+                .orElse(0);
         double minimumLoad = preferredCandidates.stream()
                 .map(EntrySource::account)
+                .filter(account -> reliabilityPenalty(account) == bestReliability)
                 .mapToDouble(this::loadRatio)
                 .min()
                 .orElse(0);
         List<EntrySource> tied = preferredCandidates.stream()
+                .filter(source -> reliabilityPenalty(source.account()) == bestReliability)
                 .filter(source -> Double.compare(loadRatio(source.account()), minimumLoad) == 0)
                 .sorted(Comparator.comparing(source -> source.account().id))
                 .toList();
@@ -1087,6 +1114,33 @@ public class IptvCatalogService {
 
     private boolean hasRecentStreamFailure(IptvAccount account) {
         return account != null && "stream-failed".equalsIgnoreCase(account.lastHealthStatus);
+    }
+
+    private Comparator<IptvAccount> streamAccountComparator() {
+        return Comparator
+                .comparingInt(this::reliabilityPenalty)
+                .thenComparingDouble(this::loadRatio)
+                .thenComparing(account -> account.id);
+    }
+
+    private int reliabilityPenalty(IptvAccount account) {
+        if (account == null) {
+            return 10_000;
+        }
+        String status = account.lastHealthStatus == null
+                ? ""
+                : account.lastHealthStatus.toLowerCase(Locale.ROOT);
+        int penalty = Math.min(500, Math.max(0, account.failureCount) * 25);
+        if ("stream-failed".equals(status)) {
+            penalty += 1_000;
+        } else if ("saturated".equals(status)) {
+            penalty += 150;
+        } else if ("expires-soon".equals(status)) {
+            penalty += 40;
+        } else if (!status.isBlank() && !"ok".equals(status)) {
+            penalty += 300;
+        }
+        return penalty;
     }
 
     private double loadRatio(IptvAccount account) {

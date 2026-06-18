@@ -13,21 +13,24 @@ spring:
   application:
     name: iptv-saas-api
   datasource:
-    url: jdbc:h2:file:./data/iptv-saas;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/nexora}
+    driver-class-name: ${DATABASE_DRIVER:org.postgresql.Driver}
+    username: ${DATABASE_USERNAME:${POSTGRES_USER:nexora}}
+    password: ${DATABASE_PASSWORD:${POSTGRES_PASSWORD:nexora}}
   h2:
     console:
       enabled: ${H2_CONSOLE_ENABLED:false}
       path: /h2-console
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${JPA_DDL_AUTO:update}
     open-in-view: false
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: false
+        jdbc:
+          time_zone: UTC
   mvc:
     async:
       request-timeout: 0
@@ -85,6 +88,9 @@ app:
     heartbeat-timeout-seconds: ${IPTV_HEARTBEAT_TIMEOUT_SECONDS:90}
     session-cleanup-interval-ms: ${IPTV_SESSION_CLEANUP_INTERVAL_MS:30000}
     proxy-range-chunk-bytes: ${IPTV_PROXY_RANGE_CHUNK_BYTES:2097152}
+    proxy-connect-timeout-seconds: ${IPTV_PROXY_CONNECT_TIMEOUT_SECONDS:8}
+    proxy-request-timeout-seconds: ${IPTV_PROXY_REQUEST_TIMEOUT_SECONDS:12}
+    proxy-probe-timeout-seconds: ${IPTV_PROXY_PROBE_TIMEOUT_SECONDS:4}
     vlc-path: ${IPTV_VLC_PATH:}
     vlc-startup-timeout-seconds: ${IPTV_VLC_STARTUP_TIMEOUT_SECONDS:45}
   addons:

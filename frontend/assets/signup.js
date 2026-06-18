@@ -181,17 +181,12 @@ function validateOtp(formData) {
 function validateForm(formData) {
     let valid = true;
     const name = String(formData.get("name") || "").trim();
-    const organizationName = String(formData.get("organizationName") || "").trim();
     const email = String(formData.get("email") || "").trim();
     const password = String(formData.get("password") || "");
     const confirmation = String(formData.get("passwordConfirmation") || "");
 
     if (name.length < 2) {
         showFieldError("name", "Indiquez votre nom complet.");
-        valid = false;
-    }
-    if (organizationName.length < 2) {
-        showFieldError("organizationName", "Donnez un nom à votre espace.");
         valid = false;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -247,7 +242,6 @@ async function submitSignup(event) {
                 },
                 body: JSON.stringify({
                     name: String(formData.get("name")).trim(),
-                    organizationName: String(formData.get("organizationName")).trim(),
                     email: String(formData.get("email")).trim(),
                     password: String(formData.get("password")),
                     planCode: state.selectedPlan.code

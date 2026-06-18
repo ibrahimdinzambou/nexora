@@ -206,6 +206,7 @@ class TelegramAdminCommandServiceTests {
         TorBoxTorrentResolver torBox = mock(TorBoxTorrentResolver.class);
         OpsService ops = mock(OpsService.class);
         AuditService audit = mock(AuditService.class);
+        NotificationService notifications = mock(NotificationService.class);
         TelegramAdminCommandService service = new TelegramAdminCommandService(
                 catalog,
                 accounts,
@@ -226,6 +227,7 @@ class TelegramAdminCommandServiceTests {
                 torBox,
                 ops,
                 audit,
+                notifications,
                 Optional.empty()
         );
         return new Fixture(catalog, accounts, sessions, streaming, addons, addonRepository, users, subscriptions,

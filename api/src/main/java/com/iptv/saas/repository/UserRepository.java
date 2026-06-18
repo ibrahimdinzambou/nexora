@@ -14,5 +14,7 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
     long countByRole(Enums.UserRole role);
 
+    long countByRoleAndActiveTrue(Enums.UserRole role);
+
     List<UserEntity> findByActive(boolean active);
 }

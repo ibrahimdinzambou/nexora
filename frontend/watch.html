@@ -46,13 +46,20 @@
             </div>
             <div class="search-panel" id="searchSuggestions" role="listbox" aria-label="Suggestions de recherche" hidden></div>
         </div>
-        <button class="icon-button notification-button" type="button" aria-label="Notifications">
+        <button class="icon-button notification-button" id="notificationButton" type="button" aria-label="Notifications" aria-expanded="false" aria-controls="notificationPanel">
             <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
                 <path d="M10 21h4"></path>
             </svg>
-            <span class="notification-dot"></span>
+            <span class="notification-dot" id="notificationDot" hidden></span>
         </button>
+        <div class="notification-panel" id="notificationPanel" hidden>
+            <div class="notification-panel-head">
+                <strong>Notifications</strong>
+                <button type="button" id="notificationReadAll">Tout lu</button>
+            </div>
+            <div class="notification-list" id="notificationList"></div>
+        </div>
         <button class="account-button" id="accountButton" type="button">
             <span class="avatar" id="accountAvatar">N</span>
             <span id="accountLabel">Connexion</span>

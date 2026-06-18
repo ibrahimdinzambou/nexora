@@ -4,6 +4,7 @@ import com.iptv.saas.web.ApiException;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -51,6 +52,9 @@ public class StreamRelayService {
 
     private final HttpClient httpClient;
     private final long rangeChunkBytes;
+    private final Duration connectTimeout;
+    private final Duration requestTimeout;
+    private final Duration probeTimeout;
     private final ExecutorService metadataExecutor = Executors.newFixedThreadPool(
             MATROSKA_PREFETCH_CHUNKS,
             runnable -> {
@@ -60,11 +64,22 @@ public class StreamRelayService {
             }
     );
 
+    @Autowired
     public StreamRelayService(
-            @Value("${app.iptv.proxy-range-chunk-bytes:2097152}") long rangeChunkBytes
+            @Value("${app.iptv.proxy-range-chunk-bytes:2097152}") long rangeChunkBytes,
+            @Value("${app.iptv.proxy-connect-timeout-seconds:8}") int connectTimeoutSeconds,
+            @Value("${app.iptv.proxy-request-timeout-seconds:12}") int requestTimeoutSeconds,
+            @Value("${app.iptv.proxy-probe-timeout-seconds:4}") int probeTimeoutSeconds
     ) {
+        this.connectTimeout = Duration.ofSeconds(Math.max(2, connectTimeoutSeconds));
+        this.requestTimeout = Duration.ofSeconds(Math.max(3, requestTimeoutSeconds));
+        this.probeTimeout = Duration.ofSeconds(Math.max(2, probeTimeoutSeconds));
         this.httpClient = newRelayClient();
         this.rangeChunkBytes = Math.max(262_144, rangeChunkBytes);
+    }
+
+    public StreamRelayService(long rangeChunkBytes) {
+        this(rangeChunkBytes, 8, 12, 4);
     }
 
     public RelayResponse open(String streamUrl, String range) {
@@ -89,6 +104,21 @@ public class StreamRelayService {
         // VLC needs the original EBML layout. Removing metadata can invalidate
         // segment offsets and make otherwise healthy MKV streams exit early.
         return openFrom(streamUrl, 0);
+    }
+
+    public void probe(String streamUrl, boolean hlsPlaylist) {
+        String range = hlsPlaylist ? null : "bytes=0-0";
+        RelayResponse response = openWithRange(newRelayClient(), streamUrl, range, probeTimeout);
+        try (InputStream body = response.body()) {
+            if (response.contentLength() != null && response.contentLength() == 0) {
+                throw ApiException.serviceUnavailable("Le fournisseur a renvoye un flux video vide");
+            }
+            if (body.read() < 0) {
+                throw ApiException.serviceUnavailable("Le fournisseur a renvoye un flux video vide");
+            }
+        } catch (IOException exception) {
+            throw ApiException.serviceUnavailable("Le fournisseur a interrompu la verification du flux");
+        }
     }
 
     private InputStream openMatroskaWithoutHeavyMetadata(String streamUrl) {
@@ -316,10 +346,14 @@ public class StreamRelayService {
     }
 
     private RelayResponse openWithRange(HttpClient client, String streamUrl, String upstreamRange) {
+        return openWithRange(client, streamUrl, upstreamRange, requestTimeout);
+    }
+
+    private RelayResponse openWithRange(HttpClient client, String streamUrl, String upstreamRange, Duration timeout) {
         URI uri = streamUri(streamUrl);
         HttpRequest.Builder request = HttpRequest.newBuilder(uri)
                 .version(HttpClient.Version.HTTP_1_1)
-                .timeout(Duration.ofSeconds(30))
+                .timeout(timeout)
                 .header("Accept", "*/*")
                 .header("User-Agent", "VLC/3.0 Nexora-IPTV");
         if (upstreamRange != null) {
@@ -374,7 +408,7 @@ public class StreamRelayService {
     private HttpClient newRelayClient() {
         return HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
-                .connectTimeout(Duration.ofSeconds(15))
+                .connectTimeout(connectTimeout)
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
     }

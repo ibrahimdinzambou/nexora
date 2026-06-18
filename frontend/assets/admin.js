@@ -560,9 +560,20 @@ function renderCustomers() {
         el.customersTable.innerHTML = state.users.length ? state.users.map(user => `
             <tr data-searchable="${escapeHtml(`${user.name} ${user.email} ${user.role}`)}"><td><span class="cell-main">${escapeHtml(user.name)}</span><span class="cell-sub">${escapeHtml(user.email)}</span></td>
             <td><select class="table-select" data-user-role="${user.id}">${["SUPER_ADMIN","ADMIN","BILLING","SUPPORT","OPS","USER"].map(role => `<option value="${role}" ${role === user.role ? "selected" : ""}>${role.replaceAll("_"," ")}</option>`).join("")}</select></td>
-            <td>#${escapeHtml(user.currentOrganizationId)}</td><td><button class="row-action ${user.active ? "positive" : "negative"}" data-user-toggle="${user.id}" data-active="${user.active}">${user.active ? "Actif" : "Inactif"}</button></td><td>${dateLabel(user.createdAt)}</td>
+            <td>#${escapeHtml(user.currentOrganizationId || "—")}</td><td><button class="row-action ${user.active ? "positive" : "negative"}" data-user-toggle="${user.id}" data-active="${user.active}">${user.active ? "Actif" : "Inactif"}</button></td><td>${dateLabel(user.createdAt)}</td>
             <td><button class="row-action" data-user-categories="${user.id}">Catégories (${user.allowedCategories?.length || 0})</button></td></tr>
         `).join("") : emptyRow(6);
+        el.customersTable.querySelectorAll("[data-user-categories]").forEach(button => {
+            const id = button.dataset.userCategories;
+            const actions = document.createElement("div");
+            actions.className = "row-actions";
+            actions.innerHTML = `
+                <button class="row-action" data-user-message="${id}">Message</button>
+                ${button.outerHTML}
+                <button class="row-action negative" data-user-delete="${id}">Supprimer</button>
+            `;
+            button.parentElement.replaceChildren(actions);
+        });
     } else {
         el.customersHead.innerHTML = "<tr><th>ID</th><th>Organisation</th><th>Formule</th><th>Droits</th><th>Statut</th><th>Fin de période</th></tr>";
         el.customersTable.innerHTML = state.subscriptions.length ? state.subscriptions.map(item => `
@@ -1453,6 +1464,28 @@ document.addEventListener("click", async event => {
     if (orgButton) try { await api(`/admin/saas/customers/${orgButton.dataset.id}/${orgButton.dataset.orgAction}`, { method: "POST" }); showToast("Statut client actualisé."); await loadCustomers(); } catch (error) { showToast(error.message, true); }
     const toggle = event.target.closest("[data-user-toggle]");
     if (toggle) try { await api(`/admin/users/${toggle.dataset.userToggle}/toggle`, { method: "PATCH", body: JSON.stringify({ active: toggle.dataset.active !== "true" }) }); await loadCustomers(); } catch (error) { showToast(error.message, true); }
+    const userMessage = event.target.closest("[data-user-message]");
+    if (userMessage) {
+        const target = state.users.find(user => user.id === Number(userMessage.dataset.userMessage));
+        const body = prompt(`Message pour ${target?.email || "cet utilisateur"}`);
+        if (body && body.trim()) {
+            try {
+                await api(`/admin/users/${userMessage.dataset.userMessage}/message`, {
+                    method: "POST",
+                    body: JSON.stringify({ title: "Message Nexora", body: body.trim(), targetUrl: "/watch.html" })
+                });
+                showToast("Message envoye.");
+            } catch (error) { showToast(error.message, true); }
+        }
+    }
+    const userDelete = event.target.closest("[data-user-delete]");
+    if (userDelete && confirm("Supprimer cet utilisateur ? Ses sessions seront fermees et ses acces revoques.")) {
+        try {
+            await api(`/admin/users/${userDelete.dataset.userDelete}`, { method: "DELETE" });
+            showToast("Utilisateur supprime.");
+            await loadCustomers();
+        } catch (error) { showToast(error.message, true); }
+    }
     const userCategories = event.target.closest("[data-user-categories]");
     if (userCategories) try { await openCategoryModal(state.users.find(user => user.id === Number(userCategories.dataset.userCategories))); } catch (error) { showToast(error.message, true); }
     const payment = event.target.closest("[data-payment-action]");

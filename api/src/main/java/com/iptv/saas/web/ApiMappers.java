@@ -221,6 +221,18 @@ public final class ApiMappers {
         return m;
     }
 
+    public static Map<String, Object> notification(UserNotification notification) {
+        Map<String, Object> m = map();
+        m.put("id", notification.id);
+        m.put("type", notification.type);
+        m.put("title", notification.title);
+        m.put("body", notification.body);
+        m.put("targetUrl", notification.targetUrl);
+        m.put("publishedAt", notification.publishedAt);
+        m.put("readAt", notification.readAt);
+        return m;
+    }
+
     public static Map<String, Object> uptime(UptimeCheck check) {
         Map<String, Object> m = map();
         m.put("id", check.id);

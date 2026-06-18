@@ -26,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -157,17 +158,7 @@ class StreamControllerTests {
         UserSession replacement = session("token", "https://replacement.test/live.ts", 2L);
         when(streams.getActiveByToken("token")).thenReturn(failed);
         when(streams.failover(eq(failed), anySet())).thenReturn(replacement);
-        when(relay.open(failed.streamUrl, null))
-                .thenThrow(ApiException.serviceUnavailable("empty stream"));
-        when(relay.open(replacement.streamUrl, null)).thenReturn(new StreamRelayService.RelayResponse(
-                200,
-                "video/mp2t",
-                3L,
-                null,
-                null,
-                false,
-                new ByteArrayInputStream(new byte[]{1, 2, 3})
-        ));
+        doThrow(ApiException.serviceUnavailable("empty stream")).when(relay).probe(failed.streamUrl, false);
 
         Map<String, Object> response = (Map<String, Object>) controller.preflight("token");
         Map<String, Object> data = (Map<String, Object>) response.get("data");
@@ -175,7 +166,7 @@ class StreamControllerTests {
         assertEquals(true, response.get("success"));
         assertEquals("/api/stream/proxy/token", data.get("proxyUrl"));
         verify(streams).failover(eq(failed), anySet());
-        verify(relay).open(replacement.streamUrl, null);
+        verify(relay).probe(replacement.streamUrl, false);
     }
 
     @Test

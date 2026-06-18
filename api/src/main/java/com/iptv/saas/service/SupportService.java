@@ -21,6 +21,7 @@ public class SupportService {
     private final EmailTemplateService templates;
     private final TelegramAlertService telegram;
     private final AuditService audit;
+    private final NotificationService notifications;
 
     public SupportService(
             SupportTicketRepository tickets,
@@ -30,7 +31,8 @@ public class SupportService {
             TransactionalMailService mail,
             EmailTemplateService templates,
             TelegramAlertService telegram,
-            AuditService audit
+            AuditService audit,
+            NotificationService notifications
     ) {
         this.tickets = tickets;
         this.messages = messages;
@@ -40,6 +42,7 @@ public class SupportService {
         this.templates = templates;
         this.telegram = telegram;
         this.audit = audit;
+        this.notifications = notifications;
     }
 
     @Transactional(readOnly = true)
@@ -119,6 +122,13 @@ public class SupportService {
                         ticket.user.email,
                         "Nouvelle réponse sur le ticket #" + ticket.id,
                         templates.supportReply(ticket.id, ticket.subject)
+                );
+                notifications.notifyUser(
+                        ticket.user,
+                        "Nouvelle reponse support",
+                        "Le support a repondu au ticket #" + ticket.id + " - " + ticket.subject,
+                        "support",
+                        "/watch.html"
                 );
             }
         } else {

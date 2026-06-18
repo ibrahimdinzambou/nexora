@@ -86,6 +86,7 @@ public class BillingService {
         subscription.startedAt = Instant.now();
         if (plan.priceMonthly == null || plan.priceMonthly.signum() == 0) {
             subscription.status = Enums.SubscriptionStatus.ACTIVE;
+            subscription.currentPeriodEnd = Instant.now().plus(billingPeriodDays(plan), ChronoUnit.DAYS);
         } else {
             int days = trialDays(plan);
             if (days <= 0) {
@@ -98,16 +99,18 @@ public class BillingService {
             subscription.trialEndsAt = Instant.now().plus(days, ChronoUnit.DAYS);
             subscription.currentPeriodEnd = subscription.trialEndsAt;
         }
+        deactivateOtherOpenSubscriptions(organization, subscription);
+        subscription = subscriptions.save(subscription);
         audit.log(
                 user,
                 subscription.status == Enums.SubscriptionStatus.TRIALING
                         ? "billing.trial.started"
                         : "billing.subscription.started",
                 "Subscription",
-                null,
+                subscription.id,
                 plan.code
         );
-        return subscriptions.save(subscription);
+        return subscription;
     }
 
     @Transactional
@@ -166,7 +169,7 @@ public class BillingService {
         if (plan.priceMonthly == null || plan.priceMonthly.signum() == 0) {
             subscription.status = Enums.SubscriptionStatus.ACTIVE;
             subscription.trialEndsAt = null;
-            subscription.currentPeriodEnd = null;
+            subscription.currentPeriodEnd = Instant.now().plus(billingPeriodDays(plan), ChronoUnit.DAYS);
         } else {
             int days = trialDays(plan);
             if (days <= 0 || subscriptions.existsByOrganizationAndPlanAndTrialEndsAtIsNotNull(organization, plan)) {
@@ -176,8 +179,10 @@ public class BillingService {
             subscription.trialEndsAt = Instant.now().plus(days, ChronoUnit.DAYS);
             subscription.currentPeriodEnd = subscription.trialEndsAt;
         }
+        deactivateOtherOpenSubscriptions(organization, subscription);
+        subscription = subscriptions.save(subscription);
         audit.log(user, "billing.plan.changed", "Subscription", subscription.id, plan.code);
-        return subscriptions.save(subscription);
+        return subscription;
     }
 
     @Transactional
@@ -368,7 +373,31 @@ public class BillingService {
         if (subscription.startedAt == null) {
             subscription.startedAt = Instant.now();
         }
+        deactivateOtherOpenSubscriptions(payment.organization, subscription);
         subscriptions.save(subscription);
+    }
+
+    private void deactivateOtherOpenSubscriptions(Organization organization, Subscription keep) {
+        if (organization == null) {
+            return;
+        }
+        List<Subscription> open = subscriptions.findByOrganizationAndStatusIn(
+                organization,
+                List.of(Enums.SubscriptionStatus.ACTIVE, Enums.SubscriptionStatus.TRIALING, Enums.SubscriptionStatus.PAST_DUE)
+        );
+        for (Subscription subscription : open) {
+            if (keep.id != null && Objects.equals(subscription.id, keep.id)) {
+                continue;
+            }
+            if (keep.id == null && subscription == keep) {
+                continue;
+            }
+            subscription.status = Enums.SubscriptionStatus.CANCELLED;
+            subscription.cancelAtPeriodEnd = true;
+        }
+        if (!open.isEmpty()) {
+            subscriptions.saveAll(open);
+        }
     }
 
     public record PlanEntitlementSpec(

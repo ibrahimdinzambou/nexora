@@ -15,6 +15,8 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
 
     List<Subscription> findByOrganization(Organization organization);
 
+    List<Subscription> findByOrganizationAndStatusIn(Organization organization, Collection<Enums.SubscriptionStatus> statuses);
+
     boolean existsByOrganizationAndPlanAndTrialEndsAtIsNotNull(Organization organization, Plan plan);
 
     long countByStatus(Enums.SubscriptionStatus status);

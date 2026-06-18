@@ -22,6 +22,7 @@ public class TelegramIptvHealthMonitor {
     private final IptvAccountRepository accounts;
     private final IptvCatalogService catalog;
     private final TelegramAlertService telegram;
+    private final NotificationService notifications;
 
     public TelegramIptvHealthMonitor(
             @Value("${app.telegram.alerts.iptv-alerts-enabled:true}") boolean enabled,
@@ -29,7 +30,8 @@ public class TelegramIptvHealthMonitor {
             @Value("${app.telegram.alerts.iptv-saturation-threshold-percent:90}") int saturationThreshold,
             IptvAccountRepository accounts,
             IptvCatalogService catalog,
-            TelegramAlertService telegram
+            TelegramAlertService telegram,
+            NotificationService notifications
     ) {
         this.enabled = enabled;
         this.expiresSoonDays = Math.max(1, expiresSoonDays);
@@ -37,6 +39,7 @@ public class TelegramIptvHealthMonitor {
         this.accounts = accounts;
         this.catalog = catalog;
         this.telegram = telegram;
+        this.notifications = notifications;
     }
 
     @Scheduled(
@@ -45,12 +48,15 @@ public class TelegramIptvHealthMonitor {
     )
     @Transactional
     public void scheduledDailyAudit() {
-        notifyTelegram(auditAccounts());
+        AuditSummary summary = auditAccounts();
+        notifications.notifyCatalogGrowth(summary.totalContent());
+        notifyTelegram(summary);
     }
 
     @Transactional
     public AuditSummary runDailyAudit() {
         AuditSummary summary = auditAccounts();
+        notifications.notifyCatalogGrowth(summary.totalContent());
         notifyTelegram(summary);
         return summary;
     }
